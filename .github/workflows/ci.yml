@@ -5,6 +5,13 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  # Manual dispatch to run deploy step with a target (TBD)
+  workflow_dispatch:
+    inputs:
+      deploy_target:
+        description: 'Deployment target identifier (e.g. azure-webapp, s3, etc.)'
+        required: false
+        default: ''
 
 jobs:
   build:
@@ -56,3 +63,36 @@ jobs:
         with:
           name: backofthehouse-publish
           path: out/publish
+
+  deploy:
+    name: Deploy (placeholder)
+    runs-on: ubuntu-latest
+    needs: build
+    if: ${{ github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' }}
+    defaults:
+      run:
+        working-directory: ./
+
+    env:
+      DEPLOY_TARGET: ${{ github.event.inputs.deploy_target || '' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download published artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: backofthehouse-publish
+
+      - name: Deploy placeholder - validate target
+        run: |
+          echo "Deployment target: $DEPLOY_TARGET"
+          if [ -z "$DEPLOY_TARGET" ]; then
+            echo "No DEPLOY_TARGET provided. This is a placeholder deploy job. Set the deploy_target input when triggering workflow_dispatch or add a secret/variable to choose a target.";
+            echo "Example targets: 'azure-webapp', 'aws-ecs', 's3', 'gcp-cloud-run'";
+            exit 1
+          fi
+          # TODO: replace the following placeholder with actual deploy steps for the target (Azure/AWS/GCP/etc.)
+          echo "Would deploy to: $DEPLOY_TARGET"
+

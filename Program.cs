@@ -1,9 +1,19 @@
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+// EF Core DbContext - prefer SQLite for cross-platform local development
+builder.Services.AddDbContext<BackOfTheHouse.Data.SandwichContext>(options =>
+{
+    // Use a file-based SQLite DB for local/dev to avoid LocalDB platform issues
+    var conn = builder.Configuration.GetValue<string>("SqliteConnection") ?? "Data Source=Data/sandwich.db";
+    options.UseSqlite(conn);
+});
 
 // CORS policy for local dev (if you want to call Kestrel directly from ng serve)
 builder.Services.AddCors(options =>
@@ -18,6 +28,9 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// Ensure DB created and seed sample data
+BackOfTheHouse.Data.SandwichContext.EnsureSeedData(app.Services);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
