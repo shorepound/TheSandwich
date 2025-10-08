@@ -41,8 +41,12 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Ensure DB created and seed sample data
-BackOfTheHouse.Data.SandwichContext.EnsureSeedData(app.Services);
+// If we're using SQLite (no DOCKER_DB_CONNECTION), ensure DB created and seed sample data
+var dockerConnCheck = Environment.GetEnvironmentVariable("DOCKER_DB_CONNECTION") ?? builder.Configuration.GetValue<string>("DockerConnection");
+if (string.IsNullOrEmpty(dockerConnCheck))
+{
+    BackOfTheHouse.Data.SandwichContext.EnsureSeedData(app.Services);
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
