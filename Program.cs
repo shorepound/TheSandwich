@@ -51,11 +51,18 @@ if (string.IsNullOrEmpty(dockerConnCheck))
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    // In development we want detailed exceptions and the OpenAPI UI.
+    // Do NOT enable automatic HTTPS redirection in development so the
+    // Angular dev server can proxy to the Kestrel HTTP endpoint without
+    // receiving 307 redirects.
     app.UseDeveloperExceptionPage();
     app.MapOpenApi();
 }
-
-app.UseHttpsRedirection();
+else
+{
+    // In non-development environments we redirect HTTP -> HTTPS.
+    app.UseHttpsRedirection();
+}
 
 // Serve static files (for production Angular build served from wwwroot)
 app.UseStaticFiles();
