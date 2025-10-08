@@ -1,0 +1,26 @@
+## Visual Studio
+.vs/
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Node
+node_modules/
+FrontOfTheHouse/node_modules/
+
+## Angular build artifacts (will be produced by CI)
+FrontOfTheHouse/dist/
+wwwroot/
+
+## Rider
+.idea/
+
+## Others
+*.DS_Store
+*.log
+publish/
+out/
+.env
