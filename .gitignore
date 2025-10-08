@@ -24,3 +24,4 @@ wwwroot/
 publish/
 out/
 .env
+Data/*.db*
