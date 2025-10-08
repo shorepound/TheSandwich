@@ -1,0 +1,6 @@
+@TheSandwich_HostAddress = http://localhost:5251
+
+GET {{TheSandwich_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,58 @@
+name: CI - Build Angular + .NET
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install frontend deps
+        working-directory: FrontOfTheHouse
+        run: npm ci
+
+      - name: Build frontend (production)
+        working-directory: FrontOfTheHouse
+        run: npm run build
+
+      - name: Copy frontend build into wwwroot
+        run: |
+          mkdir -p wwwroot
+          # prefer browser output if SSR build exists
+          if [ -d "FrontOfTheHouse/dist/sandwichUi/browser" ]; then
+            cp -R FrontOfTheHouse/dist/sandwichUi/browser/* wwwroot/
+          else
+            cp -R FrontOfTheHouse/dist/sandwichUi/* wwwroot/
+          fi
+
+      - name: Restore .NET packages
+        run: dotnet restore
+
+      - name: Build and publish .NET
+        run: dotnet publish BackOfTheHouse.csproj -c Release -o out/publish
+
+      - name: Upload publish artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backofthehouse-publish
+          path: out/publish
