@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using BackOfTheHouse.Data.Scaffolded;
+using BackOfTheHouse.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,13 +9,23 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-// EF Core DbContext - prefer SQLite for cross-platform local development
-builder.Services.AddDbContext<BackOfTheHouse.Data.SandwichContext>(options =>
+// Configure DbContext: prefer a Docker SQL Server connection (DOCKER_DB_CONNECTION) if present,
+// otherwise fall back to a local SQLite DB for cross-platform development.
+var dockerConn = Environment.GetEnvironmentVariable("DOCKER_DB_CONNECTION") ?? builder.Configuration.GetValue<string>("DockerConnection");
+if (!string.IsNullOrEmpty(dockerConn))
+{
+    // Use scaffolded DockerSandwichContext to connect to the real SQL Server
+    builder.Services.AddDbContext<DockerSandwichContext>(options => options.UseSqlServer(dockerConn));
+}
+else
 {
     // Use a file-based SQLite DB for local/dev to avoid LocalDB platform issues
-    var conn = builder.Configuration.GetValue<string>("SqliteConnection") ?? "Data Source=Data/sandwich.db";
-    options.UseSqlite(conn);
-});
+    builder.Services.AddDbContext<SandwichContext>(options =>
+    {
+        var conn = builder.Configuration.GetValue<string>("SqliteConnection") ?? "Data Source=Data/sandwich.db";
+        options.UseSqlite(conn);
+    });
+}
 
 // CORS policy for local dev (if you want to call Kestrel directly from ng serve)
 builder.Services.AddCors(options =>
