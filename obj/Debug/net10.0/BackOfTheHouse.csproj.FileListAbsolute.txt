@@ -157,9 +157,6 @@
 /Users/shorepound/Development/TheSandwich/bin/Debug/net10.0/FrontOfTheHouse/tsconfig.spec.json
 /Users/shorepound/Development/TheSandwich/bin/Debug/net10.0/FrontOfTheHouse/dist/sandwichUi/prerendered-routes.json
 /Users/shorepound/Development/TheSandwich/bin/Debug/net10.0/BackOfTheHouse.staticwebassets.runtime.json
-/Users/shorepound/Development/TheSandwich/obj/Debug/net10.0/compressed/tspvuqsnl3-d2hgmbejg9.gz
-/Users/shorepound/Development/TheSandwich/obj/Debug/net10.0/compressed/90qikxg8ln-btq3c1vpvx.gz
-/Users/shorepound/Development/TheSandwich/obj/Debug/net10.0/compressed/ypdd2cd17g-jc738395ru.gz
 /Users/shorepound/Development/TheSandwich/obj/Debug/net10.0/compressed/kbv2ntxnrt-c43t25we4b.gz
 /Users/shorepound/Development/TheSandwich/obj/Debug/net10.0/BackOfTheHouse.sourcelink.json
 /Users/shorepound/Development/TheSandwich/bin/Debug/net10.0/Microsoft.Data.Sqlite.dll
@@ -188,3 +185,8 @@
 /Users/shorepound/Development/TheSandwich/bin/Debug/net10.0/runtimes/win-arm64/native/e_sqlite3.dll
 /Users/shorepound/Development/TheSandwich/bin/Debug/net10.0/runtimes/win-x64/native/e_sqlite3.dll
 /Users/shorepound/Development/TheSandwich/bin/Debug/net10.0/runtimes/win-x86/native/e_sqlite3.dll
+/Users/shorepound/Development/TheSandwich/obj/Debug/net10.0/compressed/ucd7jdmzkp-a0vabo3ycq.gz
+/Users/shorepound/Development/TheSandwich/obj/Debug/net10.0/compressed/2tepldtsxr-d2ikye22ru.gz
+/Users/shorepound/Development/TheSandwich/obj/Debug/net10.0/compressed/tspvuqsnl3-6va0irgwu1.gz
+/Users/shorepound/Development/TheSandwich/obj/Debug/net10.0/compressed/xjgwoxizzh-wx7tblpdvq.gz
+/Users/shorepound/Development/TheSandwich/obj/Debug/net10.0/compressed/bt3u632hao-15e9xidhrg.gz
