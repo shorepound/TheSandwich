@@ -1,0 +1,3 @@
+[submodule "FrontOfTheHouse"]
+	path = FrontOfTheHouse
+	url = https://github.com/shorepound/FrontOfTheHouse.git
