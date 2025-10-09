@@ -1,7 +1,5 @@
 # TheSandwich
 
-Developer README — quick start
-
 This repository contains two main parts:
 
 - `BackOfTheHouse` — ASP.NET Core backend (net10.0)
