@@ -28,3 +28,4 @@ Data/*.db*
 
 # PID files
 backofthehouse.pid
+front-dev.pid
