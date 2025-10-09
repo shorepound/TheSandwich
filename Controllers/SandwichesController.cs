@@ -29,6 +29,16 @@ public class SandwichesController : ControllerBase
         return s;
     }
 
+    [HttpDelete("{id}")]
+    public ActionResult Delete(int id)
+    {
+        var s = _ctx.Sandwiches.Find(id);
+        if (s == null) return NotFound();
+        _ctx.Sandwiches.Remove(s);
+        _ctx.SaveChanges();
+        return NoContent();
+    }
+
     // POST /api/sandwiches/backfill-prices
     // Sets any NULL prices to 0.00 to provide a consistent display value.
     [HttpPost("backfill-prices")]
