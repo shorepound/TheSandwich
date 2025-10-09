@@ -7,10 +7,15 @@ namespace BackOfTheHouse.Controllers;
 [Route("api/options")]
 public class OptionsController : ControllerBase
 {
-    private readonly DockerSandwichContext _docker;
+    private readonly DockerSandwichContext? _docker;
     private readonly BackOfTheHouse.Data.SandwichContext? _sqlite;
 
-    public OptionsController(DockerSandwichContext docker, BackOfTheHouse.Data.SandwichContext? sqlite = null)
+    // Make the Docker context optional. In environments where DOCKER_DB_CONNECTION
+    // isn't provided we register the SQLite `SandwichContext` instead and the
+    // options tables (breads, cheeses, etc.) don't exist. Return a 503 in that
+    // case so the frontend can surface a clear error instead of the app failing
+    // to start due to DI resolution errors.
+    public OptionsController(DockerSandwichContext? docker = null, BackOfTheHouse.Data.SandwichContext? sqlite = null)
     {
         _docker = docker;
         _sqlite = sqlite;
@@ -21,6 +26,7 @@ public class OptionsController : ControllerBase
     [HttpGet("breads")]
     public IActionResult Breads()
     {
+        if (_docker == null) return StatusCode(503, "Options not available: Docker database not configured");
         var list = _docker.Breads.Select(b => ToOption(b.Id, b.Name)).ToList();
         return Ok(list);
     }
@@ -28,6 +34,7 @@ public class OptionsController : ControllerBase
     [HttpGet("cheeses")]
     public IActionResult Cheeses()
     {
+        if (_docker == null) return StatusCode(503, "Options not available: Docker database not configured");
         var list = _docker.Cheeses.Select(c => ToOption(c.Id, c.Name)).ToList();
         return Ok(list);
     }
@@ -35,6 +42,7 @@ public class OptionsController : ControllerBase
     [HttpGet("dressings")]
     public IActionResult Dressings()
     {
+        if (_docker == null) return StatusCode(503, "Options not available: Docker database not configured");
         var list = _docker.Dressings.Select(d => ToOption(d.Id, d.Name)).ToList();
         return Ok(list);
     }
@@ -42,6 +50,7 @@ public class OptionsController : ControllerBase
     [HttpGet("meats")]
     public IActionResult Meats()
     {
+        if (_docker == null) return StatusCode(503, "Options not available: Docker database not configured");
         var list = _docker.Meats.Select(m => ToOption(m.Id, m.Name)).ToList();
         return Ok(list);
     }
@@ -49,6 +58,7 @@ public class OptionsController : ControllerBase
     [HttpGet("toppings")]
     public IActionResult Toppings()
     {
+        if (_docker == null) return StatusCode(503, "Options not available: Docker database not configured");
         var list = _docker.Toppings.Select(t => ToOption(t.Id, t.Name)).ToList();
         return Ok(list);
     }
