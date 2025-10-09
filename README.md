@@ -43,5 +43,3 @@ Ignored files (high level)
 - `bin/`, `obj/` (build outputs)
 - `*.log`, `*.pid` (runtime files) — the repo now ignores `backofthehouse.pid`.
 - `node_modules/`, `FrontOfTheHouse/dist/`
-
-If you'd like, I can add a short CONTRIBUTING.md with common dev commands and code review guidelines.
