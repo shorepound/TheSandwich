@@ -8,6 +8,21 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$ROOT_DIR"
 
+# Allow setting DOCKER_DB_CONNECTION via: 1) existing env var, 2) first script arg, 3) .env file
+if [ -n "${DOCKER_DB_CONNECTION:-}" ]; then
+  echo "DOCKER_DB_CONNECTION already set in environment"
+elif [ -n "${1:-}" ]; then
+  export DOCKER_DB_CONNECTION="$1"
+  echo "DOCKER_DB_CONNECTION set from script argument"
+elif [ -f ".env" ]; then
+  # try to load DOCKER_DB_CONNECTION from .env if present (simple parse)
+  val=$(grep -E '^DOCKER_DB_CONNECTION=' .env | sed -E 's/^DOCKER_DB_CONNECTION=//; s/^"//; s/"$//') || true
+  if [ -n "$val" ]; then
+    export DOCKER_DB_CONNECTION="$val"
+    echo "DOCKER_DB_CONNECTION loaded from .env"
+  fi
+fi
+
 echo "Stopping backend on :5251 if running..."
 B_PID=$(lsof -tiTCP:5251 -sTCP:LISTEN || true)
 if [ -n "$B_PID" ]; then
