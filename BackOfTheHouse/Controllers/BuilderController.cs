@@ -26,12 +26,40 @@ public class BuilderController : ControllerBase
     [HttpPost]
     public IActionResult Post([FromBody] BuilderDto dto)
     {
-        // lookup names (null-safe)
-        string? bread = dto.breadId.HasValue ? _db.Breads.Find(dto.breadId.Value)?.Name : null;
-        string? cheese = dto.cheeseId.HasValue ? _db.Cheeses.Find(dto.cheeseId.Value)?.Name : null;
-        string? dressing = dto.dressingId.HasValue ? _db.Dressings.Find(dto.dressingId.Value)?.Name : null;
-        string? meat = dto.meatId.HasValue ? _db.Meats.Find(dto.meatId.Value)?.Name : null;
-        string? topping = dto.toppingId.HasValue ? _db.Toppings.Find(dto.toppingId.Value)?.Name : null;
+        // Validate IDs exist when provided
+        var errors = new Dictionary<string, string>();
+        string? bread = null, cheese = null, dressing = null, meat = null, topping = null;
+
+        if (dto.breadId.HasValue)
+        {
+            var b = _db.Breads.Find(dto.breadId.Value);
+            if (b == null) errors["breadId"] = "Bread not found"; else bread = b.Name;
+        }
+        if (dto.cheeseId.HasValue)
+        {
+            var c = _db.Cheeses.Find(dto.cheeseId.Value);
+            if (c == null) errors["cheeseId"] = "Cheese not found"; else cheese = c.Name;
+        }
+        if (dto.dressingId.HasValue)
+        {
+            var d = _db.Dressings.Find(dto.dressingId.Value);
+            if (d == null) errors["dressingId"] = "Dressing not found"; else dressing = d.Name;
+        }
+        if (dto.meatId.HasValue)
+        {
+            var m = _db.Meats.Find(dto.meatId.Value);
+            if (m == null) errors["meatId"] = "Meat not found"; else meat = m.Name;
+        }
+        if (dto.toppingId.HasValue)
+        {
+            var t = _db.Toppings.Find(dto.toppingId.Value);
+            if (t == null) errors["toppingId"] = "Topping not found"; else topping = t.Name;
+        }
+
+        if (errors.Count > 0)
+        {
+            return BadRequest(new { errors });
+        }
 
         var nameParts = new List<string>();
         if (!string.IsNullOrWhiteSpace(meat)) nameParts.Add(meat!);
