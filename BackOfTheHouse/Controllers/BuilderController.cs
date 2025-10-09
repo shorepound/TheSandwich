@@ -20,15 +20,16 @@ public class BuilderController : ControllerBase
         public int? cheeseId { get; set; }
         public int? dressingId { get; set; }
         public int? meatId { get; set; }
-        public int? toppingId { get; set; }
+        // allow multiple toppings
+        public List<int>? toppingIds { get; set; }
     }
 
     [HttpPost]
     public IActionResult Post([FromBody] BuilderDto dto)
     {
-        // Validate IDs exist when provided
-        var errors = new Dictionary<string, string>();
-        string? bread = null, cheese = null, dressing = null, meat = null, topping = null;
+    // Validate IDs exist when provided
+    var errors = new Dictionary<string, string>();
+    string? bread = null, cheese = null, dressing = null, meat = null;
 
         if (dto.breadId.HasValue)
         {
@@ -50,10 +51,19 @@ public class BuilderController : ControllerBase
             var m = _db.Meats.Find(dto.meatId.Value);
             if (m == null) errors["meatId"] = "Meat not found"; else meat = m.Name;
         }
-        if (dto.toppingId.HasValue)
+        var toppings = new List<string>();
+        if (dto.toppingIds != null && dto.toppingIds.Count > 0)
         {
-            var t = _db.Toppings.Find(dto.toppingId.Value);
-            if (t == null) errors["toppingId"] = "Topping not found"; else topping = t.Name;
+            foreach (var tid in dto.toppingIds)
+            {
+                var t = _db.Toppings.Find(tid);
+                if (t == null)
+                {
+                    errors["toppingIds"] = "One or more toppings not found";
+                    break;
+                }
+                toppings.Add(t.Name ?? "");
+            }
         }
 
         if (errors.Count > 0)
@@ -69,7 +79,7 @@ public class BuilderController : ControllerBase
         var descParts = new List<string>();
         if (!string.IsNullOrWhiteSpace(cheese)) descParts.Add("Cheese: " + cheese);
         if (!string.IsNullOrWhiteSpace(dressing)) descParts.Add("Dressing: " + dressing);
-        if (!string.IsNullOrWhiteSpace(topping)) descParts.Add("Topping: " + topping);
+    if (toppings.Count > 0) descParts.Add("Toppings: " + string.Join(", ", toppings.Where(s => !string.IsNullOrWhiteSpace(s))));
         var description = descParts.Count > 0 ? string.Join("; ", descParts) : null;
 
         var sandwich = new Sandwich
