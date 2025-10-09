@@ -28,4 +28,18 @@ public class SandwichesController : ControllerBase
         if (s == null) return NotFound();
         return s;
     }
+
+    // POST /api/sandwiches/backfill-prices
+    // Sets any NULL prices to 0.00 to provide a consistent display value.
+    [HttpPost("backfill-prices")]
+    public ActionResult BackfillPrices()
+    {
+        var list = _ctx.Sandwiches.Where(s => s.Price == null).ToList();
+        foreach (var s in list)
+        {
+            s.Price = 0.00m;
+        }
+        _ctx.SaveChanges();
+        return Ok(new { updated = list.Count });
+    }
 }

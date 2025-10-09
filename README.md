@@ -31,6 +31,28 @@ ng serve --proxy-config proxy.conf.json --host 0.0.0.0
 
    - The dev proxy forwards `/api` to the backend at `http://127.0.0.1:5251` so the frontend can call the API without CORS issues during development.
 
+   Developer helper
+
+   If you prefer a small helper that stops any process on :4200 and starts the frontend dev server while capturing logs, run this from the repo root:
+
+   ```
+   ./FrontOfTheHouse/dev-serve.sh
+   ```
+
+   Start everything (backend + frontend)
+
+   There is a small automation script at the repository root that restarts the backend and frontend, waits for both to bind, and tails logs:
+
+   ```
+   ./dev-start-all.sh
+   ```
+
+   You can optionally provide a Docker connection string (sets `DOCKER_DB_CONNECTION`) as the first argument or place it in a `.env` file as `DOCKER_DB_CONNECTION=...`:
+
+   ```
+   ./dev-start-all.sh "Server=127.0.0.1,1433;Database=sandwich_app;User Id=sa;Password=MyStrongPass123;TrustServerCertificate=True;"
+   ```
+
 
 Git notes
 
