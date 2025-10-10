@@ -1,4 +1,6 @@
 using BackOfTheHouse.Data.Scaffolded;
+using BackOfTheHouse.Data;
+using System;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BackOfTheHouse.Controllers;
@@ -7,11 +9,13 @@ namespace BackOfTheHouse.Controllers;
 [Route("api/builder")]
 public class BuilderController : ControllerBase
 {
-    private readonly DockerSandwichContext _db;
+    private readonly DockerSandwichContext? _docker;
+    private readonly BackOfTheHouse.Data.SandwichContext? _sqlite;
 
-    public BuilderController(DockerSandwichContext db)
+    public BuilderController(IServiceProvider provider)
     {
-        _db = db;
+        _docker = provider.GetService(typeof(DockerSandwichContext)) as DockerSandwichContext;
+        _sqlite = provider.GetService(typeof(BackOfTheHouse.Data.SandwichContext)) as BackOfTheHouse.Data.SandwichContext;
     }
 
     public class BuilderDto
@@ -19,6 +23,8 @@ public class BuilderController : ControllerBase
         // Optional user-specified name for the sandwich
         public string? name { get; set; }
         public int? breadId { get; set; }
+        // Whether the selected bread should be toasted
+        public bool? toasted { get; set; }
         // allow multiple selections
         public List<int>? toppingIds { get; set; }
         public List<int>? cheeseIds { get; set; }
@@ -48,21 +54,34 @@ public class BuilderController : ControllerBase
 
         if (dto.breadId.HasValue)
         {
-            var b = _db.Breads.Find(dto.breadId.Value);
-            if (b == null) errors["breadId"] = "Bread not found"; else bread = b.Name;
+            if (_docker != null)
+            {
+                var b = _docker.Breads.Find(dto.breadId.Value);
+                if (b == null) errors["breadId"] = "Bread not found"; else bread = b.Name;
+            }
+            else if (_sqlite != null)
+            {
+                var b = _sqlite.Options.Find(dto.breadId.Value);
+                if (b == null) errors["breadId"] = "Bread not found"; else bread = b.Name;
+            }
         }
 
         if (dto.cheeseIds != null && dto.cheeseIds.Count > 0)
         {
             foreach (var cid in dto.cheeseIds)
             {
-                var c = _db.Cheeses.Find(cid);
-                if (c == null)
+                if (_docker != null)
                 {
-                    errors["cheeseIds"] = "One or more cheeses not found";
-                    break;
+                    var c = _docker.Cheeses.Find(cid);
+                    if (c == null) { errors["cheeseIds"] = "One or more cheeses not found"; break; }
+                    cheeses.Add(c.Name ?? "");
                 }
-                cheeses.Add(c.Name ?? "");
+                else if (_sqlite != null)
+                {
+                    var c = _sqlite.Options.Find(cid);
+                    if (c == null) { errors["cheeseIds"] = "One or more cheeses not found"; break; }
+                    cheeses.Add(c.Name ?? "");
+                }
             }
         }
 
@@ -70,13 +89,18 @@ public class BuilderController : ControllerBase
         {
             foreach (var did in dto.dressingIds)
             {
-                var d = _db.Dressings.Find(did);
-                if (d == null)
+                if (_docker != null)
                 {
-                    errors["dressingIds"] = "One or more dressings not found";
-                    break;
+                    var d = _docker.Dressings.Find(did);
+                    if (d == null) { errors["dressingIds"] = "One or more dressings not found"; break; }
+                    dressings.Add(d.Name ?? "");
                 }
-                dressings.Add(d.Name ?? "");
+                else if (_sqlite != null)
+                {
+                    var d = _sqlite.Options.Find(did);
+                    if (d == null) { errors["dressingIds"] = "One or more dressings not found"; break; }
+                    dressings.Add(d.Name ?? "");
+                }
             }
         }
 
@@ -84,13 +108,18 @@ public class BuilderController : ControllerBase
         {
             foreach (var mid in dto.meatIds)
             {
-                var m = _db.Meats.Find(mid);
-                if (m == null)
+                if (_docker != null)
                 {
-                    errors["meatIds"] = "One or more meats not found";
-                    break;
+                    var m = _docker.Meats.Find(mid);
+                    if (m == null) { errors["meatIds"] = "One or more meats not found"; break; }
+                    meats.Add(m.Name ?? "");
                 }
-                meats.Add(m.Name ?? "");
+                else if (_sqlite != null)
+                {
+                    var m = _sqlite.Options.Find(mid);
+                    if (m == null) { errors["meatIds"] = "One or more meats not found"; break; }
+                    meats.Add(m.Name ?? "");
+                }
             }
         }
 
@@ -99,13 +128,18 @@ public class BuilderController : ControllerBase
         {
             foreach (var tid in dto.toppingIds)
             {
-                var t = _db.Toppings.Find(tid);
-                if (t == null)
+                if (_docker != null)
                 {
-                    errors["toppingIds"] = "One or more toppings not found";
-                    break;
+                    var t = _docker.Toppings.Find(tid);
+                    if (t == null) { errors["toppingIds"] = "One or more toppings not found"; break; }
+                    toppings.Add(t.Name ?? "");
                 }
-                toppings.Add(t.Name ?? "");
+                else if (_sqlite != null)
+                {
+                    var t = _sqlite.Options.Find(tid);
+                    if (t == null) { errors["toppingIds"] = "One or more toppings not found"; break; }
+                    toppings.Add(t.Name ?? "");
+                }
             }
         }
 
@@ -120,22 +154,43 @@ public class BuilderController : ControllerBase
         var name = nameParts.Count > 0 ? string.Join(' ', nameParts) : "Custom Sandwich";
 
         var descParts = new List<string>();
-        if (cheeses.Count > 0) descParts.Add("Cheese: " + string.Join(", ", cheeses.Where(s => !string.IsNullOrWhiteSpace(s))));
-        if (dressings.Count > 0) descParts.Add("Dressing: " + string.Join(", ", dressings.Where(s => !string.IsNullOrWhiteSpace(s))));
-        if (toppings.Count > 0) descParts.Add("Toppings: " + string.Join(", ", toppings.Where(s => !string.IsNullOrWhiteSpace(s))));
+        if (!string.IsNullOrWhiteSpace(bread))
+        {
+            var btxt = bread + (dto.toasted.HasValue && dto.toasted.Value ? " (toasted)" : "");
+            descParts.Add("Bread: " + btxt);
+        }
+    if (cheeses.Count > 0) descParts.Add("Cheese: " + string.Join(", ", cheeses.Where(s => !string.IsNullOrWhiteSpace(s))));
+    if (dressings.Count > 0) descParts.Add("Dressing: " + string.Join(", ", dressings.Where(s => !string.IsNullOrWhiteSpace(s))));
+    if (meats.Count > 0) descParts.Add("Meats: " + string.Join(", ", meats.Where(s => !string.IsNullOrWhiteSpace(s))));
+    if (toppings.Count > 0) descParts.Add("Toppings: " + string.Join(", ", toppings.Where(s => !string.IsNullOrWhiteSpace(s))));
         var description = descParts.Count > 0 ? string.Join("; ", descParts) : null;
 
-        var sandwich = new Sandwich
+        // Create sandwich in whichever context we have available
+        if (_docker != null)
         {
-            // If the client provided an explicit name, prefer it; otherwise use the auto-generated name
-            Name = string.IsNullOrWhiteSpace(dto.name) ? name : dto.name,
-            Description = description,
-            Price = dto.price
-        };
+            var sandwich = new BackOfTheHouse.Data.Scaffolded.Sandwich
+            {
+                Name = string.IsNullOrWhiteSpace(dto.name) ? name : dto.name,
+                Description = description,
+                Price = dto.price
+            };
+            _docker.Sandwiches.Add(sandwich);
+            _docker.SaveChanges();
+            return CreatedAtAction(null, new { id = sandwich.Id }, sandwich);
+        }
+        else if (_sqlite != null)
+        {
+            var sandwich = new BackOfTheHouse.Data.Sandwich
+            {
+                Name = string.IsNullOrWhiteSpace(dto.name) ? name : dto.name,
+                Description = description ?? string.Empty,
+                Price = dto.price ?? 0.00m
+            };
+            _sqlite.Sandwiches.Add(sandwich);
+            _sqlite.SaveChanges();
+            return CreatedAtAction(null, new { id = sandwich.Id }, sandwich);
+        }
 
-        _db.Sandwiches.Add(sandwich);
-        _db.SaveChanges();
-
-        return CreatedAtAction(null, new { id = sandwich.Id }, sandwich);
+    return StatusCode(500, new { error = "No database context available" });
     }
 }

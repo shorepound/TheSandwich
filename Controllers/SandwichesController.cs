@@ -77,7 +77,7 @@ public class SandwichesController : ControllerBase
             var s = _docker.Sandwiches.Find(id);
             if (s == null) return NotFound();
             _docker.Sandwiches.Remove(s);
-            _docker.SaveChanges();
+                if (_docker != null) _docker.SaveChanges();
             return NoContent();
         }
         if (_sqlite != null)
@@ -85,7 +85,7 @@ public class SandwichesController : ControllerBase
             var s = _sqlite.Sandwiches.Find(id);
             if (s == null) return NotFound();
             _sqlite.Sandwiches.Remove(s);
-            _sqlite.SaveChanges();
+            if (_sqlite != null) _sqlite.SaveChanges();
             return NoContent();
         }
         return NotFound();
@@ -113,6 +113,13 @@ public class SandwichesController : ControllerBase
         public string? name { get; set; }
         public string? description { get; set; }
         public decimal? price { get; set; }
+        // Optional composition fields - if provided we'll rebuild the description
+        public int? breadId { get; set; }
+        public bool? toasted { get; set; }
+        public List<int>? cheeseIds { get; set; }
+        public List<int>? dressingIds { get; set; }
+        public List<int>? meatIds { get; set; }
+        public List<int>? toppingIds { get; set; }
     }
 
     [HttpPut("{id}")]
@@ -123,8 +130,47 @@ public class SandwichesController : ControllerBase
             var s = _docker.Sandwiches.Find(id);
             if (s == null) return NotFound();
             if (dto.name != null) s.Name = dto.name;
-            if (dto.description != null) s.Description = dto.description;
             if (dto.price.HasValue) s.Price = dto.price.Value;
+
+            // If caller provided an explicit description, prefer it. Otherwise,
+            // if any composition fields are present, rebuild the description
+            if (dto.description != null)
+            {
+                s.Description = dto.description;
+            }
+            else if (dto.breadId.HasValue || dto.cheeseIds != null || dto.dressingIds != null || dto.meatIds != null || dto.toppingIds != null)
+            {
+                var breads = new List<string>();
+                var cheeses = new List<string>();
+                var dressings = new List<string>();
+                var meats = new List<string>();
+                var toppings = new List<string>();
+                string? bread = null;
+                if (_docker != null)
+                {
+                    if (dto.breadId.HasValue) { var b = _docker.Breads.Find(dto.breadId.Value); if (b != null) bread = b.Name; }
+                    if (dto.cheeseIds != null) foreach (var idc in dto.cheeseIds) { var c = _docker.Cheeses.Find(idc); if (c != null) cheeses.Add(c.Name ?? ""); }
+                    if (dto.dressingIds != null) foreach (var idd in dto.dressingIds) { var d = _docker.Dressings.Find(idd); if (d != null) dressings.Add(d.Name ?? ""); }
+                    if (dto.meatIds != null) foreach (var idm in dto.meatIds) { var m = _docker.Meats.Find(idm); if (m != null) meats.Add(m.Name ?? ""); }
+                    if (dto.toppingIds != null) foreach (var idt in dto.toppingIds) { var t = _docker.Toppings.Find(idt); if (t != null) toppings.Add(t.Name ?? ""); }
+                }
+                else if (_sqlite != null)
+                {
+                    if (dto.breadId.HasValue) { var b = _sqlite.Options.Find(dto.breadId.Value); if (b != null) bread = b.Name; }
+                    if (dto.cheeseIds != null) foreach (var idc in dto.cheeseIds) { var c = _sqlite.Options.Find(idc); if (c != null) cheeses.Add(c.Name ?? ""); }
+                    if (dto.dressingIds != null) foreach (var idd in dto.dressingIds) { var d = _sqlite.Options.Find(idd); if (d != null) dressings.Add(d.Name ?? ""); }
+                    if (dto.meatIds != null) foreach (var idm in dto.meatIds) { var m = _sqlite.Options.Find(idm); if (m != null) meats.Add(m.Name ?? ""); }
+                    if (dto.toppingIds != null) foreach (var idt in dto.toppingIds) { var t = _sqlite.Options.Find(idt); if (t != null) toppings.Add(t.Name ?? ""); }
+                }
+
+                var parts = new List<string>();
+                if (!string.IsNullOrWhiteSpace(bread)) { var btxt = bread + (dto.toasted.HasValue && dto.toasted.Value ? " (toasted)" : ""); parts.Add("Bread: " + btxt); }
+                if (cheeses.Count > 0) parts.Add("Cheese: " + string.Join(", ", cheeses.Where(s1 => !string.IsNullOrWhiteSpace(s1))));
+                if (dressings.Count > 0) parts.Add("Dressing: " + string.Join(", ", dressings.Where(s1 => !string.IsNullOrWhiteSpace(s1))));
+                if (meats.Count > 0) parts.Add("Meats: " + string.Join(", ", meats.Where(s1 => !string.IsNullOrWhiteSpace(s1))));
+                if (toppings.Count > 0) parts.Add("Toppings: " + string.Join(", ", toppings.Where(s1 => !string.IsNullOrWhiteSpace(s1))));
+                s.Description = parts.Count > 0 ? string.Join("; ", parts) : s.Description;
+            }
             _docker.SaveChanges();
             return NoContent();
         }
