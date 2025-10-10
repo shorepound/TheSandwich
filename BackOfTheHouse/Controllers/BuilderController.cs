@@ -32,8 +32,15 @@ public class BuilderController : ControllerBase
     [HttpPost]
     public IActionResult Post([FromBody] BuilderDto dto)
     {
+        // Name is required
+        var errors = new Dictionary<string, string>();
+        if (string.IsNullOrWhiteSpace(dto.name))
+        {
+            errors["name"] = "Name is required";
+            return BadRequest(new { errors });
+        }
+
         // Validate IDs exist when provided
-    var errors = new Dictionary<string, string>();
     string? bread = null;
     var cheeses = new List<string>();
     var dressings = new List<string>();
