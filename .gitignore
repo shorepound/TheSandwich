@@ -29,3 +29,8 @@ Data/*.db*
 # PID files
 backofthehouse.pid
 front-dev.pid
+
+# dev runtime files
+FrontOfTheHouse/front-dev.log
+FrontOfTheHouse/front-dev.pid
+backof.pid
