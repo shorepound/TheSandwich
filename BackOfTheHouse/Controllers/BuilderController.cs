@@ -16,6 +16,8 @@ public class BuilderController : ControllerBase
 
     public class BuilderDto
     {
+        // Optional user-specified name for the sandwich
+        public string? name { get; set; }
         public int? breadId { get; set; }
         // allow multiple selections
         public List<int>? toppingIds { get; set; }
@@ -118,7 +120,8 @@ public class BuilderController : ControllerBase
 
         var sandwich = new Sandwich
         {
-            Name = name,
+            // If the client provided an explicit name, prefer it; otherwise use the auto-generated name
+            Name = string.IsNullOrWhiteSpace(dto.name) ? name : dto.name,
             Description = description,
             Price = dto.price
         };
