@@ -25,16 +25,17 @@ public class SandwichesController : ControllerBase
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
         public decimal? Price { get; set; }
+        public bool Toasted { get; set; }
     }
 
     private static SandwichDto ToDto(BackOfTheHouse.Data.Scaffolded.Sandwich s)
     {
-        return new SandwichDto { Id = s.Id, Name = s.Name ?? string.Empty, Description = s.Description, Price = s.Price };
+        return new SandwichDto { Id = s.Id, Name = s.Name ?? string.Empty, Description = s.Description, Price = s.Price, Toasted = s.Toasted };
     }
 
     private static SandwichDto ToDto(BackOfTheHouse.Data.Sandwich s)
     {
-        return new SandwichDto { Id = s.Id, Name = s.Name ?? string.Empty, Description = s.Description, Price = s.Price };
+        return new SandwichDto { Id = s.Id, Name = s.Name ?? string.Empty, Description = s.Description, Price = s.Price, Toasted = s.Toasted };
     }
 
     [HttpGet]
@@ -77,7 +78,7 @@ public class SandwichesController : ControllerBase
             var s = _docker.Sandwiches.Find(id);
             if (s == null) return NotFound();
             _docker.Sandwiches.Remove(s);
-                if (_docker != null) _docker.SaveChanges();
+                _docker!.SaveChanges();
             return NoContent();
         }
         if (_sqlite != null)
@@ -101,7 +102,7 @@ public class SandwichesController : ControllerBase
         {
             var list = _docker.Sandwiches.Where(s => s.Price == null).ToList();
             foreach (var s in list) { s.Price = 0.00m; }
-            _docker.SaveChanges();
+            _docker!.SaveChanges();
             updated = list.Count;
         }
         // For sqlite context Price is non-nullable in our model; no-op
@@ -171,7 +172,9 @@ public class SandwichesController : ControllerBase
                 if (toppings.Count > 0) parts.Add("Toppings: " + string.Join(", ", toppings.Where(s1 => !string.IsNullOrWhiteSpace(s1))));
                 s.Description = parts.Count > 0 ? string.Join("; ", parts) : s.Description;
             }
-            _docker.SaveChanges();
+            // persist Toasted if provided
+            if (dto.toasted.HasValue) s.Toasted = dto.toasted.Value;
+            _docker!.SaveChanges();
             return NoContent();
         }
         if (_sqlite != null)
@@ -181,6 +184,7 @@ public class SandwichesController : ControllerBase
             if (dto.name != null) s.Name = dto.name;
             if (dto.description != null) s.Description = dto.description;
             if (dto.price.HasValue) s.Price = dto.price.Value;
+            if (dto.toasted.HasValue) s.Toasted = dto.toasted.Value;
             _sqlite.SaveChanges();
             return NoContent();
         }
