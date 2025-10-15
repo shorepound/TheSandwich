@@ -21,8 +21,11 @@ jobs:
         working-directory: ./
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repository (including submodules)
         uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -33,6 +36,12 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
+
+      - name: Debug workspace before frontend install
+        run: |
+          echo "PWD: $(pwd)"
+          echo "Listing root files:" && ls -la
+          echo "Listing FrontOfTheHouse/ files:" && ls -la FrontOfTheHouse || true
 
       - name: Install frontend deps
         working-directory: FrontOfTheHouse
