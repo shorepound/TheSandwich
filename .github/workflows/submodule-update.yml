@@ -70,7 +70,6 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-          include-prerelease: true
 
       - name: Publish backend
         if: steps.detect.outputs.changed == '1'

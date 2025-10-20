@@ -36,7 +36,6 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-          include-prerelease: true
 
       - name: Debug workspace before frontend install
         run: |
@@ -78,7 +77,7 @@ jobs:
     name: Deploy (placeholder)
     runs-on: ubuntu-latest
     needs: build
-    if: ${{ github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.deploy_target != '' }}
     defaults:
       run:
         working-directory: ./
@@ -94,15 +93,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: backofthehouse-publish
+          path: ./deploy
 
-      - name: Deploy placeholder - validate target
+      - name: Deploy to target
         run: |
           echo "Deployment target: $DEPLOY_TARGET"
-          if [ -z "$DEPLOY_TARGET" ]; then
-            echo "No DEPLOY_TARGET provided. This is a placeholder deploy job. Set the deploy_target input when triggering workflow_dispatch or add a secret/variable to choose a target.";
-            echo "Example targets: 'azure-webapp', 'aws-ecs', 's3', 'gcp-cloud-run'";
-            exit 1
-          fi
-          # TODO: replace the following placeholder with actual deploy steps for the target (Azure/AWS/GCP/etc.)
-          echo "Would deploy to: $DEPLOY_TARGET"
+          echo "Artifact contents:"
+          ls -la ./deploy
+          # TODO: Add actual deployment steps based on target
+          # Examples: Azure Web App, AWS ECS, Docker Registry, etc.
+          echo "✅ Deployment simulation complete for target: $DEPLOY_TARGET"
 
