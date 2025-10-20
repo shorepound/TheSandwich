@@ -67,10 +67,11 @@ jobs:
 
       - name: Setup .NET
         if: steps.detect.outputs.changed == '1'
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '10.0.x'
+          include-prerelease: true
 
       - name: Publish backend
         if: steps.detect.outputs.changed == '1'
-        run: dotnet publish BackOfTheHouse/BackOfTheHouse.csproj -c Release -o out/publish
+        run: dotnet publish BackOfTheHouse.csproj -c Release -o out/publish
