@@ -61,7 +61,7 @@ public class SandwichesController : ControllerBase
                         var breads = docker.Breads;
                         if (breads != null)
                         {
-                            var b = breads.AsEnumerable().FirstOrDefault(x => x.Name.Equals(btxt, StringComparison.OrdinalIgnoreCase));
+                            var b = breads.AsEnumerable().FirstOrDefault(x => x.Name != null && x.Name.Equals(btxt, StringComparison.OrdinalIgnoreCase));
                             if (b != null) dto.BreadId = b.Id;
                         }
                         if (toasted) dto.Toasted = true;
@@ -75,7 +75,7 @@ public class SandwichesController : ControllerBase
                             var cheeses = docker.Cheeses;
                             if (cheeses != null)
                             {
-                                var c = cheeses.AsEnumerable().FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                                var c = cheeses.AsEnumerable().FirstOrDefault(x => x.Name != null && x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
                                 if (c != null) ids.Add(c.Id);
                             }
                         }
@@ -90,7 +90,7 @@ public class SandwichesController : ControllerBase
                             var dressings = docker.Dressings;
                             if (dressings != null)
                             {
-                                var d = dressings.AsEnumerable().FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                                var d = dressings.AsEnumerable().FirstOrDefault(x => x.Name != null && x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
                                 if (d != null) ids.Add(d.Id);
                             }
                         }
@@ -106,7 +106,7 @@ public class SandwichesController : ControllerBase
                             var meats = docker.Meats;
                             if (meats != null)
                             {
-                                var m = meats.AsEnumerable().FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                                var m = meats.AsEnumerable().FirstOrDefault(x => x.Name != null && x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
                                 if (m != null) ids.Add(m.Id);
                             }
                         }
@@ -122,7 +122,7 @@ public class SandwichesController : ControllerBase
                             var toppings = docker.Toppings;
                             if (toppings != null)
                             {
-                                var t = toppings.AsEnumerable().FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                                var t = toppings.AsEnumerable().FirstOrDefault(x => x.Name != null && x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
                                 if (t != null) ids.Add(t.Id);
                             }
                         }
@@ -155,7 +155,7 @@ public class SandwichesController : ControllerBase
                             toasted = true;
                             btxt = btxt.Substring(0, btxt.Length - "(toasted)".Length).Trim();
                         }
-                        var opt = sqlite.Options.FirstOrDefault(x => x.Category == "breads" && x.Name.Equals(btxt, StringComparison.OrdinalIgnoreCase));
+                        var opt = sqlite.Options.FirstOrDefault(x => x.Category == "breads" && x.Name != null && x.Name.Equals(btxt, StringComparison.OrdinalIgnoreCase));
                         if (opt != null) dto.BreadId = opt.Id;
                         if (toasted) dto.Toasted = true;
                     }
@@ -165,7 +165,7 @@ public class SandwichesController : ControllerBase
                         var ids = new List<int>();
                         foreach (var name in list)
                         {
-                            var opt = sqlite.Options.FirstOrDefault(x => x.Category == "cheeses" && x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                            var opt = sqlite.Options.FirstOrDefault(x => x.Category == "cheeses" && x.Name != null && x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
                             if (opt != null) ids.Add(opt.Id);
                         }
                         if (ids.Count > 0) dto.CheeseIds = ids;
@@ -176,7 +176,7 @@ public class SandwichesController : ControllerBase
                         var ids = new List<int>();
                         foreach (var name in list)
                         {
-                            var opt = sqlite.Options.FirstOrDefault(x => x.Category == "dressings" && x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                            var opt = sqlite.Options.FirstOrDefault(x => x.Category == "dressings" && x.Name != null && x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
                             if (opt != null) ids.Add(opt.Id);
                         }
                         if (ids.Count > 0) dto.DressingIds = ids;
@@ -188,7 +188,7 @@ public class SandwichesController : ControllerBase
                         var ids = new List<int>();
                         foreach (var name in list)
                         {
-                            var opt = sqlite.Options.FirstOrDefault(x => x.Category == "meats" && x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                            var opt = sqlite.Options.FirstOrDefault(x => x.Category == "meats" && x.Name != null && x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
                             if (opt != null) ids.Add(opt.Id);
                         }
                         if (ids.Count > 0) dto.MeatIds = ids;
@@ -200,7 +200,7 @@ public class SandwichesController : ControllerBase
                         var ids = new List<int>();
                         foreach (var name in list)
                         {
-                            var opt = sqlite.Options.FirstOrDefault(x => x.Category == "toppings" && x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                            var opt = sqlite.Options.FirstOrDefault(x => x.Category == "toppings" && x.Name != null && x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
                             if (opt != null) ids.Add(opt.Id);
                         }
                         if (ids.Count > 0) dto.ToppingIds = ids;
