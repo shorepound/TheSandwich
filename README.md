@@ -93,8 +93,14 @@ npm start  # Uses proxy configuration automatically
 ### Available Scripts
 
 ```bash
-# Start both services (recommended)
+# 🚀 Start both services (recommended)
 ./dev-start-all.sh
+
+# 🛑 Stop all development services
+./dev-stop-all.sh
+
+# 📊 Check service status and health
+./dev-status.sh
 
 # Start with specific SQL Server connection
 ./dev-start-all.sh "Server=localhost,1433;Database=sandwich_app;..."
@@ -102,6 +108,29 @@ npm start  # Uses proxy configuration automatically
 # Start only frontend (if backend is already running)
 ./FrontOfTheHouse/dev-serve.sh
 ```
+
+### Script Features
+
+- **`dev-start-all.sh`** - Enhanced startup script with:
+  - Colorized output and progress indicators
+  - Prerequisite checking (Node.js, .NET SDK)
+  - Automatic dependency installation
+  - Robust service stopping and cleanup
+  - Health checks and detailed status reporting
+  - Better error handling and troubleshooting hints
+
+- **`dev-stop-all.sh`** - Clean shutdown script that:
+  - Gracefully stops services by port and PID
+  - Cleans up all related processes
+  - Provides clear status feedback
+  - Handles both graceful and force-kill scenarios
+
+- **`dev-status.sh`** - Comprehensive status checker that shows:
+  - Service running status and health
+  - Environment information
+  - PID file status
+  - Log file locations and sizes
+  - Quick command reference
 
 ### Environment Configuration
 
@@ -114,18 +143,27 @@ DOCKER_DB_CONNECTION="Server=127.0.0.1,1433;Database=sandwich_app;User Id=sa;Pas
 ### Useful Commands
 
 ```bash
-# Build the application
+# 📊 Quick status check
+./dev-status.sh
+
+# 🛑 Stop all services cleanly
+./dev-stop-all.sh
+
+# 🔨 Build the application
 dotnet build BackOfTheHouse.csproj
 
-# Run database migrations (if using SQL Server)
+# 🗄️ Run database migrations (if using SQL Server)
 dotnet ef database update --context DockerSandwichContext
 
-# Check running services
+# 👀 View real-time logs
+tail -f backofthehouse.log      # Backend logs
+tail -f FrontOfTheHouse/front-dev.log  # Frontend logs
+
+# 🔍 Check what's running on development ports
 lsof -i :4200 -i :5251
 
-# View logs
-tail -f backof.log
-tail -f FrontOfTheHouse/front-dev.log
+# 🧹 Clean restart (stops and starts fresh)
+./dev-stop-all.sh && ./dev-start-all.sh
 ```
 
 ## 📡 API Endpoints
@@ -153,22 +191,41 @@ tail -f FrontOfTheHouse/front-dev.log
 
 1. **Port Already in Use**
    ```bash
-   # Kill processes on development ports
+   # Use the stop script for clean shutdown
+   ./dev-stop-all.sh
+   
+   # Or manually kill processes on development ports
    lsof -ti:4200 -ti:5251 | xargs kill
    ```
 
-2. **Database Schema Mismatch**
+2. **Services Won't Start**
+   ```bash
+   # Check detailed status
+   ./dev-status.sh
+   
+   # Verify prerequisites are installed
+   dotnet --version && node --version && npm --version
+   ```
+
+3. **Database Schema Mismatch**
    ```bash
    # Reset SQLite database
    rm Data/sandwich.db*
-   dotnet run --project BackOfTheHouse.csproj
+   ./dev-start-all.sh
    ```
 
-3. **Frontend Build Errors**
+4. **Frontend Build Errors**
    ```bash
    cd FrontOfTheHouse
    rm -rf node_modules package-lock.json
    npm install
+   ```
+
+5. **Stale Processes**
+   ```bash
+   # Clean shutdown and restart
+   ./dev-stop-all.sh
+   ./dev-start-all.sh
    ```
 
 ## 🐛 Git Notes
