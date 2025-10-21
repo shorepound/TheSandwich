@@ -26,28 +26,202 @@ public class SandwichesController : ControllerBase
         public string? Description { get; set; }
         public decimal? Price { get; set; }
         public bool Toasted { get; set; }
+
+        // Composition fields inferred from Description (or stored later if schema changes)
+        public int? BreadId { get; set; }
+        public List<int>? CheeseIds { get; set; }
+        public List<int>? DressingIds { get; set; }
+        public List<int>? MeatIds { get; set; }
+        public List<int>? ToppingIds { get; set; }
     }
 
-    private static SandwichDto ToDto(BackOfTheHouse.Data.Scaffolded.Sandwich s)
+    private static SandwichDto ToDto(BackOfTheHouse.Data.Scaffolded.Sandwich s, DockerSandwichContext? docker = null)
     {
-        return new SandwichDto { Id = s.Id, Name = s.Name ?? string.Empty, Description = s.Description, Price = s.Price, Toasted = s.Toasted };
+        // Build a basic dto and attempt to infer composition ids by looking up option names
+        var dto = new SandwichDto { Id = s.Id, Name = s.Name ?? string.Empty, Description = s.Description, Price = s.Price, Toasted = s.Toasted };
+        if (!string.IsNullOrWhiteSpace(s.Description) && docker != null)
+        {
+            // Parse server-side description in the same simple format the frontend expects: "Bread: X (toasted); Cheese: A, B; Dressing: C; Meats: ...; Toppings: ..."
+            try
+            {
+                var parts = s.Description.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Select(p => p.Trim()).ToList();
+                foreach (var part in parts)
+                {
+                    if (part.StartsWith("Bread:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var btxt = part.Substring(6).Trim();
+                        // strip toasted suffix if present
+                        var toasted = false;
+                        if (btxt.EndsWith("(toasted)", StringComparison.OrdinalIgnoreCase))
+                        {
+                            toasted = true;
+                            btxt = btxt.Substring(0, btxt.Length - "(toasted)".Length).Trim();
+                        }
+                        // find matching bread id
+                        var breads = docker.Breads;
+                        if (breads != null)
+                        {
+                            var b = breads.AsEnumerable().FirstOrDefault(x => x.Name.Equals(btxt, StringComparison.OrdinalIgnoreCase));
+                            if (b != null) dto.BreadId = b.Id;
+                        }
+                        if (toasted) dto.Toasted = true;
+                    }
+                    else if (part.StartsWith("Cheese:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var list = part.Substring(7).Split(',').Select(x => x.Trim()).Where(x => x.Length > 0).ToList();
+                        var ids = new List<int>();
+                        foreach (var name in list)
+                        {
+                            var cheeses = docker.Cheeses;
+                            if (cheeses != null)
+                            {
+                                var c = cheeses.AsEnumerable().FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                                if (c != null) ids.Add(c.Id);
+                            }
+                        }
+                        if (ids.Count > 0) dto.CheeseIds = ids;
+                    }
+                    else if (part.StartsWith("Dressing:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var list = part.Substring(9).Split(',').Select(x => x.Trim()).Where(x => x.Length > 0).ToList();
+                        var ids = new List<int>();
+                        foreach (var name in list)
+                        {
+                            var dressings = docker.Dressings;
+                            if (dressings != null)
+                            {
+                                var d = dressings.AsEnumerable().FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                                if (d != null) ids.Add(d.Id);
+                            }
+                        }
+                        if (ids.Count > 0) dto.DressingIds = ids;
+                    }
+                    else if (part.StartsWith("Meats:", StringComparison.OrdinalIgnoreCase) || part.StartsWith("Meat:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var idx = part.IndexOf(':');
+                        var list = part.Substring(idx + 1).Split(',').Select(x => x.Trim()).Where(x => x.Length > 0).ToList();
+                        var ids = new List<int>();
+                        foreach (var name in list)
+                        {
+                            var meats = docker.Meats;
+                            if (meats != null)
+                            {
+                                var m = meats.AsEnumerable().FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                                if (m != null) ids.Add(m.Id);
+                            }
+                        }
+                        if (ids.Count > 0) dto.MeatIds = ids;
+                    }
+                    else if (part.StartsWith("Toppings:", StringComparison.OrdinalIgnoreCase) || part.StartsWith("Topping:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var idx = part.IndexOf(':');
+                        var list = part.Substring(idx + 1).Split(',').Select(x => x.Trim()).Where(x => x.Length > 0).ToList();
+                        var ids = new List<int>();
+                        foreach (var name in list)
+                        {
+                            var toppings = docker.Toppings;
+                            if (toppings != null)
+                            {
+                                var t = toppings.AsEnumerable().FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                                if (t != null) ids.Add(t.Id);
+                            }
+                        }
+                        if (ids.Count > 0) dto.ToppingIds = ids;
+                    }
+                }
+            }
+            catch { /* be resilient - don't fail the API if parsing has issues */ }
+        }
+        return dto;
     }
 
-    private static SandwichDto ToDto(BackOfTheHouse.Data.Sandwich s)
+    private static SandwichDto ToDto(BackOfTheHouse.Data.Sandwich s, BackOfTheHouse.Data.SandwichContext? sqlite = null)
     {
-        return new SandwichDto { Id = s.Id, Name = s.Name ?? string.Empty, Description = s.Description, Price = s.Price, Toasted = s.Toasted };
-    }
-
-    [HttpGet]
+        // SQLite-backed Sandwich model uses a different context; reuse the same inference logic
+        var dto = new SandwichDto { Id = s.Id, Name = s.Name ?? string.Empty, Description = s.Description, Price = s.Price, Toasted = s.Toasted };
+        if (!string.IsNullOrWhiteSpace(s.Description) && sqlite != null)
+        {
+            try
+            {
+                var parts = s.Description.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Select(p => p.Trim()).ToList();
+                foreach (var part in parts)
+                {
+                    if (part.StartsWith("Bread:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var btxt = part.Substring(6).Trim();
+                        var toasted = false;
+                        if (btxt.EndsWith("(toasted)", StringComparison.OrdinalIgnoreCase))
+                        {
+                            toasted = true;
+                            btxt = btxt.Substring(0, btxt.Length - "(toasted)".Length).Trim();
+                        }
+                        var opt = sqlite.Options.FirstOrDefault(x => x.Category == "breads" && x.Name.Equals(btxt, StringComparison.OrdinalIgnoreCase));
+                        if (opt != null) dto.BreadId = opt.Id;
+                        if (toasted) dto.Toasted = true;
+                    }
+                    else if (part.StartsWith("Cheese:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var list = part.Substring(7).Split(',').Select(x => x.Trim()).Where(x => x.Length > 0).ToList();
+                        var ids = new List<int>();
+                        foreach (var name in list)
+                        {
+                            var opt = sqlite.Options.FirstOrDefault(x => x.Category == "cheeses" && x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                            if (opt != null) ids.Add(opt.Id);
+                        }
+                        if (ids.Count > 0) dto.CheeseIds = ids;
+                    }
+                    else if (part.StartsWith("Dressing:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var list = part.Substring(9).Split(',').Select(x => x.Trim()).Where(x => x.Length > 0).ToList();
+                        var ids = new List<int>();
+                        foreach (var name in list)
+                        {
+                            var opt = sqlite.Options.FirstOrDefault(x => x.Category == "dressings" && x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                            if (opt != null) ids.Add(opt.Id);
+                        }
+                        if (ids.Count > 0) dto.DressingIds = ids;
+                    }
+                    else if (part.StartsWith("Meats:", StringComparison.OrdinalIgnoreCase) || part.StartsWith("Meat:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var idx = part.IndexOf(':');
+                        var list = part.Substring(idx + 1).Split(',').Select(x => x.Trim()).Where(x => x.Length > 0).ToList();
+                        var ids = new List<int>();
+                        foreach (var name in list)
+                        {
+                            var opt = sqlite.Options.FirstOrDefault(x => x.Category == "meats" && x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                            if (opt != null) ids.Add(opt.Id);
+                        }
+                        if (ids.Count > 0) dto.MeatIds = ids;
+                    }
+                    else if (part.StartsWith("Toppings:", StringComparison.OrdinalIgnoreCase) || part.StartsWith("Topping:", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var idx = part.IndexOf(':');
+                        var list = part.Substring(idx + 1).Split(',').Select(x => x.Trim()).Where(x => x.Length > 0).ToList();
+                        var ids = new List<int>();
+                        foreach (var name in list)
+                        {
+                            var opt = sqlite.Options.FirstOrDefault(x => x.Category == "toppings" && x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                            if (opt != null) ids.Add(opt.Id);
+                        }
+                        if (ids.Count > 0) dto.ToppingIds = ids;
+                    }
+                }
+            }
+            catch { }
+        }
+        return dto;
+    }    [HttpGet]
     public ActionResult<IEnumerable<SandwichDto>> Get()
     {
         if (_docker != null)
         {
-            return Ok(_docker.Sandwiches.Select(s => ToDto(s)).ToList());
+            var sandwiches = _docker.Sandwiches.ToList();
+            return Ok(sandwiches.Select(s => ToDto(s, _docker)).ToList());
         }
         if (_sqlite != null)
         {
-            return Ok(_sqlite.Sandwiches.Select(s => ToDto(s)).ToList());
+            var sandwiches = _sqlite.Sandwiches.ToList();
+            return Ok(sandwiches.Select(s => ToDto(s, _sqlite)).ToList());
         }
         return Ok(Array.Empty<SandwichDto>());
     }
@@ -59,13 +233,13 @@ public class SandwichesController : ControllerBase
         {
             var s = _docker.Sandwiches.Find(id);
             if (s == null) return NotFound();
-            return ToDto(s);
+            return ToDto(s, _docker);
         }
         if (_sqlite != null)
         {
             var s = _sqlite.Sandwiches.Find(id);
             if (s == null) return NotFound();
-            return ToDto(s);
+            return ToDto(s, _sqlite);
         }
         return NotFound();
     }
