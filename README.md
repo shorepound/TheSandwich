@@ -202,4 +202,4 @@ The application is configured for deployment with:
 
 ## 📝 License
 
-This project is for demonstration purposes.
+Inspired by https://github.com/dansinker/tacofancy
