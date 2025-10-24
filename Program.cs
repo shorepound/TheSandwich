@@ -9,6 +9,10 @@ builder.Services.AddOpenApi();
 // Configure application services
 builder.Services.AddSandwichDatabase(builder.Configuration);
 builder.Services.AddCorsPolicy();
+// Application services
+builder.Services.AddApplicationServices();
+// Data protection (used for protecting MFA secrets)
+builder.Services.AddDataProtection();
 
 var app = builder.Build();
 

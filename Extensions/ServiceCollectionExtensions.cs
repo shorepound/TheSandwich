@@ -29,6 +29,13 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
+    public static IServiceCollection AddApplicationServices(this IServiceCollection services)
+    {
+        // Auth service depends on the DbContext and Data Protection; scoped lifetime is appropriate.
+        services.AddScoped<BackOfTheHouse.Services.IAuthService, BackOfTheHouse.Services.AuthService>();
+        return services;
+    }
+
     public static IServiceCollection AddCorsPolicy(this IServiceCollection services)
     {
         // CORS policy for local dev (if you want to call Kestrel directly from ng serve)
