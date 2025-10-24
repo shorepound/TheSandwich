@@ -20,6 +20,7 @@ var app = builder.Build();
 app.EnsureDatabaseSeeded(builder.Configuration);
 
 // Configure request pipeline
+app.UseMiddleware<CachingMiddleware>();
 app.ConfigureRequestPipeline();
 
 app.Run();
