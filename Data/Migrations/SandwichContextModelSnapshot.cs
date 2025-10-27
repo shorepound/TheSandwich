@@ -57,6 +57,8 @@ namespace BackOfTheHouse.Data.Migrations
 
                     b.Property<int?>("OwnerUserId")
                         .HasColumnType("INTEGER");
+                    b.Property<bool>("IsPrivate")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 

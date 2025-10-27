@@ -294,7 +294,10 @@ public class SandwichesController : ControllerBase
             // If sandwich has an owner, only the owner may delete it
             try {
                 var owner = (int?) (s.GetType().GetProperty("OwnerUserId")?.GetValue(s));
-                if (owner.HasValue && userId != null && owner.Value != userId.Value) return Forbid();
+                var isPrivate = false;
+                try { isPrivate = (bool)(s.GetType().GetProperty("IsPrivate")?.GetValue(s) ?? false); } catch {}
+                // If sandwich is private and has an owner, only owner may delete
+                if (isPrivate && owner.HasValue && userId != null && owner.Value != userId.Value) return Forbid();
             } catch {}
             _docker.Sandwiches.Remove(s);
             _docker!.SaveChanges();
@@ -304,7 +307,7 @@ public class SandwichesController : ControllerBase
         {
             var s = _sqlite.Sandwiches.Find(id);
             if (s == null) return NotFound();
-            if (s.OwnerUserId.HasValue && userId != null && s.OwnerUserId.Value != userId.Value) return Forbid();
+            if (s.IsPrivate && s.OwnerUserId.HasValue && userId != null && s.OwnerUserId.Value != userId.Value) return Forbid();
             _sqlite.Sandwiches.Remove(s);
             if (_sqlite != null) _sqlite.SaveChanges();
             return NoContent();
@@ -353,7 +356,9 @@ public class SandwichesController : ControllerBase
             if (s == null) return NotFound();
             try {
                 var owner = (int?) (s.GetType().GetProperty("OwnerUserId")?.GetValue(s));
-                if (owner.HasValue && userId != null && owner.Value != userId.Value) return Forbid();
+                var isPrivate = false;
+                try { isPrivate = (bool)(s.GetType().GetProperty("IsPrivate")?.GetValue(s) ?? false); } catch {}
+                if (isPrivate && owner.HasValue && userId != null && owner.Value != userId.Value) return Forbid();
             } catch {}
             if (dto.name != null) s.Name = dto.name;
             if (dto.price.HasValue) s.Price = dto.price.Value;
@@ -406,7 +411,7 @@ public class SandwichesController : ControllerBase
         {
             var s = _sqlite.Sandwiches.Find(id);
             if (s == null) return NotFound();
-            if (s.OwnerUserId.HasValue && userId != null && s.OwnerUserId.Value != userId.Value) return Forbid();
+            if (s.IsPrivate && s.OwnerUserId.HasValue && userId != null && s.OwnerUserId.Value != userId.Value) return Forbid();
             if (dto.name != null) s.Name = dto.name;
             if (dto.description != null) s.Description = dto.description;
             if (dto.price.HasValue) s.Price = dto.price.Value;

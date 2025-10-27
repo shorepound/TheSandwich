@@ -50,6 +50,8 @@ public partial class DockerSandwichContext : DbContext
             entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
             // OwnerUserId maps to owner_user_id column in Docker DB when present
             entity.Property<int?>("OwnerUserId").HasColumnName("owner_user_id");
+            // Map privacy flag when present in the Docker DB schema
+            entity.Property<bool>("IsPrivate").HasColumnName("is_private");
         });
 
         modelBuilder.Entity<Bread>(entity =>

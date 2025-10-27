@@ -183,13 +183,14 @@ public class BuilderController : ControllerBase
         // Create sandwich in whichever context we have available
         if (_docker != null)
         {
-            var sandwich = new BackOfTheHouse.Data.Scaffolded.Sandwich
+        var sandwich = new BackOfTheHouse.Data.Scaffolded.Sandwich
             {
                 Name = string.IsNullOrWhiteSpace(dto.name) ? name : dto.name,
                 Description = description,
                     Price = dto.price,
-                    Toasted = dto.toasted ?? false,
-                    OwnerUserId = ownerUserId
+            Toasted = dto.toasted ?? false,
+            OwnerUserId = ownerUserId,
+            IsPrivate = ownerUserId.HasValue
             };
             _docker.Sandwiches.Add(sandwich);
             _docker.SaveChanges();
@@ -197,13 +198,14 @@ public class BuilderController : ControllerBase
         }
         else if (_sqlite != null)
         {
-            var sandwich = new BackOfTheHouse.Data.Sandwich
+        var sandwich = new BackOfTheHouse.Data.Sandwich
             {
                 Name = string.IsNullOrWhiteSpace(dto.name) ? name : dto.name,
                     Description = description ?? string.Empty,
                     Price = dto.price ?? 0.00m,
-                    Toasted = dto.toasted ?? false,
-                    OwnerUserId = ownerUserId
+            Toasted = dto.toasted ?? false,
+            OwnerUserId = ownerUserId,
+            IsPrivate = ownerUserId.HasValue
             };
             _sqlite.Sandwiches.Add(sandwich);
             _sqlite.SaveChanges();
