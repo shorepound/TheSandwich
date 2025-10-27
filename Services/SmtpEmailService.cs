@@ -58,6 +58,45 @@ public class SmtpEmailService : IEmailService
         }
     }
 
+    public Task SendPasswordResetAsync(string toEmail, string resetUrl)
+    {
+        if (string.IsNullOrEmpty(_opts.Host))
+        {
+            _logger.LogInformation("SMTP not configured - skipping password reset email to {email}", toEmail);
+            return Task.CompletedTask;
+        }
+
+        try
+        {
+            var from = new MailAddress(_opts.FromAddress ?? "no-reply@example.com", _opts.FromName ?? "The Sandwich");
+            var to = new MailAddress(toEmail);
+
+            using var msg = new MailMessage(from, to)
+            {
+                Subject = "Password reset for The Sandwich",
+                IsBodyHtml = true,
+                Body = BuildPasswordResetBody(resetUrl)
+            };
+
+            using var client = new SmtpClient(_opts.Host, _opts.Port ?? 25)
+            {
+                EnableSsl = _opts.UseSsl,
+            };
+
+            if (!string.IsNullOrEmpty(_opts.Username))
+            {
+                client.Credentials = new NetworkCredential(_opts.Username, _opts.Password);
+            }
+
+            return Task.Run(() => client.Send(msg));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send password reset email to {email}", toEmail);
+            return Task.CompletedTask;
+        }
+    }
+
     private string BuildWelcomeBody(string? name)
     {
         var n = string.IsNullOrWhiteSpace(name) ? "there" : name;
@@ -65,6 +104,18 @@ public class SmtpEmailService : IEmailService
 <h2 style='color:#06629f'>Welcome, {System.Net.WebUtility.HtmlEncode(n)}!</h2>
 <p>Thanks for registering at <strong>The Sandwich</strong>. You're all set — head over to <a href='{_opts.PublicUrl ?? "http://localhost:4200"}'>the app</a> to build and browse sandwiches.</p>
 <p>— The Sandwich team</p>
+</div>";
+    }
+
+    private string BuildPasswordResetBody(string resetUrl)
+    {
+        var url = System.Net.WebUtility.HtmlEncode(resetUrl);
+        return $@"<div style='font-family:system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; color:#222'>
+<h2 style='color:#06629f'>Password reset</h2>
+<p>We received a request to reset the password for your account. Click the link below to set a new password. If you did not request this, you can ignore this email.</p>
+<p><a href='{url}'>Reset your password</a></p>
+<p>If the link does not work, copy and paste this URL into your browser:</p>
+<p style='word-break:break-all'>{url}</p>
 </div>";
     }
 

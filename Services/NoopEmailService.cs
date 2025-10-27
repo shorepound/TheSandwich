@@ -16,4 +16,10 @@ public class NoopEmailService : IEmailService
         _logger.LogInformation("NoopEmailService: would send welcome email to {email}", toEmail);
         return Task.CompletedTask;
     }
+
+    public Task SendPasswordResetAsync(string toEmail, string resetUrl)
+    {
+        _logger.LogInformation("NoopEmailService: would send password reset to {email} with url {url}", toEmail, resetUrl);
+        return Task.CompletedTask;
+    }
 }

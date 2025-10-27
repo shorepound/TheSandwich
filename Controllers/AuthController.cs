@@ -48,6 +48,54 @@ public class AuthController : ControllerBase
         return Ok(new { exists });
     }
 
+    public class ForgotDto { public string? email { get; set; } }
+
+    [HttpPost("forgot")]
+    public async Task<IActionResult> Forgot([FromBody] ForgotDto dto)
+    {
+        if (dto?.email == null) return BadRequest(new { error = "email required" });
+
+        // Log incoming forgot requests so we can trace browser-originated calls in dev
+        _logger.LogInformation("Forgot endpoint invoked for email: {email}", dto?.email);
+
+        // Don't reveal whether an email exists — respond with success in all cases.
+        try
+        {
+            var email = dto.email!.Trim();
+            var exists = await _auth.EmailExistsAsync(email);
+            if (!exists)
+            {
+                // Always return OK to avoid leaking which addresses are registered.
+                return Ok(new { success = true });
+            }
+
+            // Generate a one-time token (GUID) and construct a reset URL.
+            var token = Guid.NewGuid().ToString("D");
+            // Use configured public URL if available, otherwise assume frontend at http://localhost:4200
+            var publicUrl = Request.Headers.ContainsKey("Origin") ? Request.Headers["Origin"].ToString() : null;
+            if (string.IsNullOrEmpty(publicUrl)) publicUrl = "http://localhost:4200";
+            var resetUrl = $"{publicUrl.TrimEnd('/')}/reset-password?token={System.Net.WebUtility.UrlEncode(token)}";
+
+            // Send reset email (no-op if email not configured)
+            var emailSvc = HttpContext.RequestServices.GetService(typeof(BackOfTheHouse.Services.IEmailService)) as BackOfTheHouse.Services.IEmailService;
+            if (emailSvc != null)
+            {
+                try {
+                    await emailSvc.SendPasswordResetAsync(email, resetUrl);
+                } catch (Exception ex) {
+                    _logger.LogWarning(ex, "Failed to send password reset email to {email}", email);
+                }
+            }
+
+            return Ok(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Forgot password handling failed");
+            return StatusCode(500, new { error = "server error" });
+        }
+    }
+
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
