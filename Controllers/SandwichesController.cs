@@ -28,6 +28,10 @@ public class SandwichesController : ControllerBase
         public decimal? Price { get; set; }
         public bool Toasted { get; set; }
 
+        // Ownership / privacy info (added so frontend can hide edit controls)
+        public int? OwnerUserId { get; set; }
+        public bool IsPrivate { get; set; }
+
         // Composition fields inferred from Description (or stored later if schema changes)
         public int? BreadId { get; set; }
         public List<int>? CheeseIds { get; set; }
@@ -39,7 +43,7 @@ public class SandwichesController : ControllerBase
     private static SandwichDto ToDto(BackOfTheHouse.Data.Scaffolded.Sandwich s, DockerSandwichContext? docker = null)
     {
         // Build a basic dto and attempt to infer composition ids by looking up option names
-        var dto = new SandwichDto { Id = s.Id, Name = s.Name ?? string.Empty, Description = s.Description, Price = s.Price, Toasted = s.Toasted };
+    var dto = new SandwichDto { Id = s.Id, Name = s.Name ?? string.Empty, Description = s.Description, Price = s.Price, Toasted = s.Toasted, OwnerUserId = s.OwnerUserId, IsPrivate = s.IsPrivate };
         if (!string.IsNullOrWhiteSpace(s.Description) && docker != null)
         {
             // Parse server-side description in the same simple format the frontend expects: "Bread: X (toasted); Cheese: A, B; Dressing: C; Meats: ...; Toppings: ..."
@@ -139,7 +143,7 @@ public class SandwichesController : ControllerBase
     private static SandwichDto ToDto(BackOfTheHouse.Data.Sandwich s, BackOfTheHouse.Data.SandwichContext? sqlite = null)
     {
         // SQLite-backed Sandwich model uses a different context; reuse the same inference logic
-        var dto = new SandwichDto { Id = s.Id, Name = s.Name ?? string.Empty, Description = s.Description, Price = s.Price, Toasted = s.Toasted };
+    var dto = new SandwichDto { Id = s.Id, Name = s.Name ?? string.Empty, Description = s.Description, Price = s.Price, Toasted = s.Toasted, OwnerUserId = s.OwnerUserId, IsPrivate = s.IsPrivate };
         if (!string.IsNullOrWhiteSpace(s.Description) && sqlite != null)
         {
             try
