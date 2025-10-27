@@ -91,6 +91,33 @@ public class AuthService : IAuthService
         }
     }
 
+    public async Task<bool> EmailExistsAsync(string email)
+    {
+        email = email?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(email)) return false;
+        if (_docker == null)
+        {
+            _logger.LogWarning("Docker DB context is not available when checking email existence");
+            return false;
+        }
+
+        try
+        {
+            using var conn = _docker.Database.GetDbConnection();
+            await conn.OpenAsync();
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT COUNT(1) FROM dbo.tb_users WHERE LOWER(email)=LOWER(@email)";
+            var p = cmd.CreateParameter(); p.ParameterName = "@email"; p.Value = email; cmd.Parameters.Add(p);
+            var exists = Convert.ToInt32(await cmd.ExecuteScalarAsync());
+            return exists > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "EmailExistsAsync failed");
+            return false;
+        }
+    }
+
     public async Task<(bool ok, int status, string? token, bool requiresMfa, string? mfaToken, string? error)> AuthenticateAsync(string email, string password)
     {
         email = email?.Trim() ?? string.Empty;

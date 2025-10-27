@@ -26,8 +26,26 @@ public class AuthController : ControllerBase
     {
         if (dto?.email == null || dto?.password == null) return BadRequest(new { error = "email and password required" });
         var (ok, err) = await _auth.RegisterAsync(dto.email, dto.password);
-        if (!ok) return BadRequest(new { error = err });
+        if (!ok)
+        {
+            // Map duplicate email case to 409 Conflict so clients can act (e.g., offer login)
+            if (string.Equals(err, "email already registered", System.StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogInformation("Registration attempt for existing email: {email}", dto.email);
+                return Conflict(new { error = "email already registered" });
+            }
+            return BadRequest(new { error = err });
+        }
+
         return Ok(new { success = true });
+    }
+
+    [HttpGet("exists")]
+    public async Task<IActionResult> Exists([FromQuery] string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email)) return BadRequest(new { error = "email required" });
+        var exists = await _auth.EmailExistsAsync(email);
+        return Ok(new { exists });
     }
 
     [HttpPost("login")]
