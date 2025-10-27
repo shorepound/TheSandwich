@@ -165,6 +165,21 @@ public class BuilderController : ControllerBase
     if (toppings.Count > 0) descParts.Add("Toppings: " + string.Join(", ", toppings.Where(s => !string.IsNullOrWhiteSpace(s))));
         var description = descParts.Count > 0 ? string.Join("; ", descParts) : null;
 
+        // Determine user id from Authorization header (optional). We use the simple token format encoded by AuthService: base64(guid:userId:email:ticks)
+        int? ownerUserId = null;
+        try {
+            var auth = Request.Headers["Authorization"].ToString();
+            if (!string.IsNullOrEmpty(auth) && auth.StartsWith("Bearer "))
+            {
+                var token = auth.Substring("Bearer ".Length).Trim();
+                try {
+                    var raw = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(token));
+                    var parts = raw.Split(':');
+                    if (parts.Length >= 2 && int.TryParse(parts[1], out var uid)) ownerUserId = uid;
+                } catch {}
+            }
+        } catch {}
+
         // Create sandwich in whichever context we have available
         if (_docker != null)
         {
@@ -173,7 +188,8 @@ public class BuilderController : ControllerBase
                 Name = string.IsNullOrWhiteSpace(dto.name) ? name : dto.name,
                 Description = description,
                     Price = dto.price,
-                    Toasted = dto.toasted ?? false
+                    Toasted = dto.toasted ?? false,
+                    OwnerUserId = ownerUserId
             };
             _docker.Sandwiches.Add(sandwich);
             _docker.SaveChanges();
@@ -186,7 +202,8 @@ public class BuilderController : ControllerBase
                 Name = string.IsNullOrWhiteSpace(dto.name) ? name : dto.name,
                     Description = description ?? string.Empty,
                     Price = dto.price ?? 0.00m,
-                    Toasted = dto.toasted ?? false
+                    Toasted = dto.toasted ?? false,
+                    OwnerUserId = ownerUserId
             };
             _sqlite.Sandwiches.Add(sandwich);
             _sqlite.SaveChanges();

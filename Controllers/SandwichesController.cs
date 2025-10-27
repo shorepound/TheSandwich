@@ -1,6 +1,7 @@
 using BackOfTheHouse.Data;
 using BackOfTheHouse.Data.Scaffolded;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace BackOfTheHouse.Controllers;
 
@@ -226,6 +227,44 @@ public class SandwichesController : ControllerBase
         return Ok(Array.Empty<SandwichDto>());
     }
 
+    // GET /api/sandwiches/mine
+    [HttpGet("mine")]
+    public ActionResult<IEnumerable<SandwichDto>> Mine()
+    {
+        // Try to parse the simple token format: base64(guid:userId:email:ticks)
+        int? userId = null;
+        try {
+            var auth = Request.Headers["Authorization"].ToString();
+            if (!string.IsNullOrEmpty(auth) && auth.StartsWith("Bearer "))
+            {
+                var token = auth.Substring("Bearer ".Length).Trim();
+                try {
+                    var raw = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(token));
+                    var parts = raw.Split(':');
+                    if (parts.Length >= 2 && int.TryParse(parts[1], out var uid)) userId = uid;
+                } catch {}
+            }
+        } catch {}
+
+        if (userId == null)
+        {
+            // If we couldn't determine the user, return empty list to avoid leaking data
+            return Ok(Array.Empty<SandwichDto>());
+        }
+
+        if (_docker != null)
+        {
+            var sandwiches = _docker.Sandwiches.Where(s => EF.Property<int?>(s, "OwnerUserId") == userId).ToList();
+            return Ok(sandwiches.Select(s => ToDto(s, _docker)).ToList());
+        }
+        if (_sqlite != null)
+        {
+            var sandwiches = _sqlite.Sandwiches.Where(s => s.OwnerUserId == userId).ToList();
+            return Ok(sandwiches.Select(s => ToDto(s, _sqlite)).ToList());
+        }
+        return Ok(Array.Empty<SandwichDto>());
+    }
+
     [HttpGet("{id}")]
     public ActionResult<SandwichDto> Get(int id)
     {
@@ -247,18 +286,25 @@ public class SandwichesController : ControllerBase
     [HttpDelete("{id}")]
     public ActionResult Delete(int id)
     {
+        var userId = ParseUserIdFromAuthorization();
         if (_docker != null)
         {
             var s = _docker.Sandwiches.Find(id);
             if (s == null) return NotFound();
+            // If sandwich has an owner, only the owner may delete it
+            try {
+                var owner = (int?) (s.GetType().GetProperty("OwnerUserId")?.GetValue(s));
+                if (owner.HasValue && userId != null && owner.Value != userId.Value) return Forbid();
+            } catch {}
             _docker.Sandwiches.Remove(s);
-                _docker!.SaveChanges();
+            _docker!.SaveChanges();
             return NoContent();
         }
         if (_sqlite != null)
         {
             var s = _sqlite.Sandwiches.Find(id);
             if (s == null) return NotFound();
+            if (s.OwnerUserId.HasValue && userId != null && s.OwnerUserId.Value != userId.Value) return Forbid();
             _sqlite.Sandwiches.Remove(s);
             if (_sqlite != null) _sqlite.SaveChanges();
             return NoContent();
@@ -300,10 +346,15 @@ public class SandwichesController : ControllerBase
     [HttpPut("{id}")]
     public ActionResult Update(int id, [FromBody] UpdateDto dto)
     {
+        var userId = ParseUserIdFromAuthorization();
         if (_docker != null)
         {
             var s = _docker.Sandwiches.Find(id);
             if (s == null) return NotFound();
+            try {
+                var owner = (int?) (s.GetType().GetProperty("OwnerUserId")?.GetValue(s));
+                if (owner.HasValue && userId != null && owner.Value != userId.Value) return Forbid();
+            } catch {}
             if (dto.name != null) s.Name = dto.name;
             if (dto.price.HasValue) s.Price = dto.price.Value;
 
@@ -355,6 +406,7 @@ public class SandwichesController : ControllerBase
         {
             var s = _sqlite.Sandwiches.Find(id);
             if (s == null) return NotFound();
+            if (s.OwnerUserId.HasValue && userId != null && s.OwnerUserId.Value != userId.Value) return Forbid();
             if (dto.name != null) s.Name = dto.name;
             if (dto.description != null) s.Description = dto.description;
             if (dto.price.HasValue) s.Price = dto.price.Value;
@@ -363,5 +415,26 @@ public class SandwichesController : ControllerBase
             return NoContent();
         }
         return NotFound();
+    }
+
+    private int? ParseUserIdFromAuthorization()
+    {
+        try
+        {
+            var auth = Request.Headers["Authorization"].ToString();
+            if (!string.IsNullOrEmpty(auth) && auth.StartsWith("Bearer "))
+            {
+                var token = auth.Substring("Bearer ".Length).Trim();
+                try
+                {
+                    var raw = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(token));
+                    var parts = raw.Split(':');
+                    if (parts.Length >= 2 && int.TryParse(parts[1], out var uid)) return uid;
+                }
+                catch { }
+            }
+        }
+        catch { }
+        return null;
     }
 }

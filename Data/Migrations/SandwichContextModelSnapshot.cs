@@ -55,6 +55,9 @@ namespace BackOfTheHouse.Data.Migrations
                     b.Property<bool>("Toasted")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("OwnerUserId")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
 
                     b.ToTable("Sandwiches");

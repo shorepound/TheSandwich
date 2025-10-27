@@ -13,4 +13,5 @@ public partial class Sandwich
 
     public decimal? Price { get; set; }
     public bool Toasted { get; set; }
+    public int? OwnerUserId { get; set; }
 }

@@ -48,6 +48,8 @@ public partial class DockerSandwichContext : DbContext
             entity.Property(e => e.Description).HasMaxLength(1000);
             entity.Property(e => e.Name).HasMaxLength(200);
             entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
+            // OwnerUserId maps to owner_user_id column in Docker DB when present
+            entity.Property<int?>("OwnerUserId").HasColumnName("owner_user_id");
         });
 
         modelBuilder.Entity<Bread>(entity =>

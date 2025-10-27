@@ -1,4 +1,5 @@
 using BackOfTheHouse.Extensions;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,8 +17,28 @@ builder.Services.AddDataProtection();
 
 var app = builder.Build();
 
-// Ensure database is seeded for SQLite scenarios
-app.EnsureDatabaseSeeded(builder.Configuration);
+// Apply pending EF Core migrations for SQLite SandwichContext (if used) and ensure seed data.
+using (var scope = app.Services.CreateScope())
+{
+	var services = scope.ServiceProvider;
+	try
+	{
+		var sqlite = services.GetService<BackOfTheHouse.Data.SandwichContext>();
+		if (sqlite != null)
+		{
+			// Apply any pending migrations (no-op if none)
+			sqlite.Database.Migrate();
+		}
+	}
+	catch (Exception ex)
+	{
+		var logger = services.GetService<ILoggerFactory>()?.CreateLogger("Startup");
+		logger?.LogWarning(ex, "Automatic migration failed during startup");
+	}
+
+	// Ensure database is seeded for SQLite scenarios
+	app.EnsureDatabaseSeeded(builder.Configuration);
+}
 
 // Configure request pipeline
 app.UseMiddleware<CachingMiddleware>();

@@ -7,4 +7,6 @@ public class Sandwich
     public string Description { get; set; } = string.Empty;
     public decimal Price { get; set; }
     public bool Toasted { get; set; }
+    // Nullable owner id referencing dbo.tb_users.Id when available
+    public int? OwnerUserId { get; set; }
 }

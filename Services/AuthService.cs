@@ -178,8 +178,10 @@ public class AuthService : IAuthService
                 return (true, 200, null, true, mfaToken, null);
             }
 
-            // Generate a simple token (not a real JWT) — a random GUID encoded with email/time
-            var tokenPayload = $"{Guid.NewGuid():N}:{email}:{DateTime.UtcNow.Ticks}";
+            // Generate a simple token (not a real JWT) — include user id so server-side APIs can map requests to the user
+            var userId = rdr.IsDBNull(0) ? 0 : rdr.GetInt32(0);
+            // payload: guid:userId:email:ticks
+            var tokenPayload = $"{Guid.NewGuid():N}:{userId}:{email}:{DateTime.UtcNow.Ticks}";
             var token = Convert.ToBase64String(Encoding.UTF8.GetBytes(tokenPayload));
 
             return (true, 200, token, false, null, null);
