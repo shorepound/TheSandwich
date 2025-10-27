@@ -29,10 +29,20 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddApplicationServices(this IServiceCollection services)
+    public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
     {
         // Auth service depends on the DbContext and Data Protection; scoped lifetime is appropriate.
         services.AddScoped<BackOfTheHouse.Services.IAuthService, BackOfTheHouse.Services.AuthService>();
+        // Email service: register an SMTP-backed sender if Smtp:Host configured, otherwise a no-op implementation
+        var smtpHost = configuration.GetValue<string>("Smtp:Host");
+        if (!string.IsNullOrEmpty(smtpHost))
+        {
+            services.AddSingleton<BackOfTheHouse.Services.IEmailService, BackOfTheHouse.Services.SmtpEmailService>();
+        }
+        else
+        {
+            services.AddSingleton<BackOfTheHouse.Services.IEmailService, BackOfTheHouse.Services.NoopEmailService>();
+        }
         return services;
     }
 

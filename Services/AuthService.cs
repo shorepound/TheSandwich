@@ -20,12 +20,14 @@ public class AuthService : IAuthService
     private readonly DockerSandwichContext? _docker;
     private readonly IDataProtector _protector;
     private readonly ILogger<AuthService> _logger;
+    private readonly IEmailService _email;
 
-    public AuthService(IServiceProvider provider, IDataProtectionProvider dp, ILogger<AuthService> logger)
+    public AuthService(IServiceProvider provider, IDataProtectionProvider dp, ILogger<AuthService> logger, IEmailService email)
     {
         _docker = provider.GetService(typeof(DockerSandwichContext)) as DockerSandwichContext;
         _protector = dp.CreateProtector("BackOfTheHouse.AuthService.Mfa");
         _logger = logger;
+        _email = email;
     }
 
     public async Task<(bool ok, string? error)> RegisterAsync(string email, string password)
@@ -68,6 +70,16 @@ public class AuthService : IAuthService
                 var pe = cmd.CreateParameter(); pe.ParameterName = "@email"; pe.Value = email; cmd.Parameters.Add(pe);
                 var pp = cmd.CreateParameter(); pp.ParameterName = "@ph"; pp.Value = blobb64; cmd.Parameters.Add(pp);
                 await cmd.ExecuteNonQueryAsync();
+            }
+
+            // Try to send a welcome email. Failure to send should NOT fail registration.
+            try
+            {
+                await _email.SendWelcomeAsync(email);
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send welcome email to {email}", email);
             }
 
             return (true, null);
