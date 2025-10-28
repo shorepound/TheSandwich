@@ -132,6 +132,68 @@ npm start  # Uses proxy configuration automatically
   - Log file locations and sizes
   - Quick command reference
 
+## 🧰 Developer tasks (local)
+
+This section documents local developer tooling and recommended workflows for working on the project.
+
+### dev-clean-build.sh (new)
+
+Purpose: stop running dev services, clear common caches and build artifacts, reinstall frontend dependencies, and perform fresh builds for backend and frontend.
+
+Usage:
+
+```bash
+# Normal clean + build (stops services)
+./dev-clean-build.sh
+
+# Full clean (removes FrontOfTheHouse/node_modules and reinstalls)
+./dev-clean-build.sh --full
+```
+
+Notes:
+- The script will call `./dev-stop-all.sh` to ensure services are not running while cleaning.
+- `--full` removes `node_modules` and requires network access to reinstall packages; expect it to be slower.
+- The script runs `dotnet nuget locals all --clear` and `dotnet build`; on repositories with multiple `.csproj` files it will prefer the project file used by the start script, but if you see a message like:
+
+   "MSBUILD : error MSB1011: Specify which project or solution file to use because this folder contains more than one project or solution file."
+
+   then re-run the build against an explicit project file, for example:
+
+```bash
+dotnet build BackOfTheHouse.csproj
+```
+
+### Recommended developer workflow
+
+1. When switching branches or pulling big changes, use the clean job to ensure your local caches and artifacts are fresh:
+
+```bash
+./dev-clean-build.sh
+```
+
+2. Start services and view the app:
+
+```bash
+./dev-start-all.sh
+# Frontend: http://localhost:4200
+# Backend:  http://localhost:5251
+```
+
+3. Use `./dev-status.sh` to quickly check health, logs, and PIDs.
+
+4. If the frontend behaves oddly, try the full clean:
+
+```bash
+./dev-clean-build.sh --full
+```
+
+### Troubleshooting tips (developer-focused)
+
+- If `dotnet` commands fail due to multiple projects in the root, build or run the intended project explicitly: `dotnet run --project BackOfTheHouse.csproj`.
+- If the frontend dev server reports stale artifacts, remove `FrontOfTheHouse/dist` and restart or run the full clean.
+- If you need deterministic frontend installs, switch the `dev-clean-build.sh` `npm install` line to `npm ci` and commit a lockfile.
+
+
 ### Environment Configuration
 
 Create a `.env` file in the root directory:
