@@ -54,6 +54,7 @@ public class SandwichContext : DbContext
                     new Option { Name = "Turkey", Category = "meats" },
                     new Option { Name = "Ham", Category = "meats" },
                     new Option { Name = "Bacon", Category = "meats" },
+                    new Option { Name = "Tempeh", Category = "meats" },
                     // Toppings
                     new Option { Name = "Lettuce", Category = "toppings" },
                     new Option { Name = "Tomato", Category = "toppings" },
