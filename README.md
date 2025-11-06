@@ -304,13 +304,6 @@ Development and build artifacts are automatically ignored:
 - `node_modules/`, `FrontOfTheHouse/dist/` - Dependencies and build artifacts
 - `Data/sandwich.db*` - Local SQLite database files
 
-## 🚀 Deployment
-
-The application is configured for deployment with:
-- **CI/CD Pipeline**: GitHub Actions workflow (`.github/workflows/ci.yml`)
-- **Production Build**: Angular SSR build copied to `wwwroot`
-- **Environment Variables**: Configure `DOCKER_DB_CONNECTION` for production database
-
 ## 🤝 Contributing
 
 1. Fork the repository
