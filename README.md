@@ -4,177 +4,178 @@ A full-stack sandwich ordering application demonstrating modern web development 
 
 ## 🥪 Overview
 
-```markdown
-# TheSandwich
+This repository contains two main parts:
 
-Build and showcase modern full‑stack patterns with a delightful sandwich ordering demo — great for prototypes, demos, and hands‑on workshops. Run it locally in minutes and iterate fast.
+- **`BackOfTheHouse`** — ASP.NET Core backend (.NET 10) with Entity Framework
+- **`FrontOfTheHouse`** — Angular frontend with server-side rendering support
 
-## 🧭 Table of contents
+## 🚀 Features
 
-- Overview
-- Recent work
-- Quick local start
-- Scripts & tooling
-- Local development (backend / frontend)
-- Deployment notes
-- API endpoints
-- Contributing
+- **Dual Database Support**: SQL Server (production) with SQLite fallback (development)
+- **Sandwich Builder**: Interactive sandwich creation with ingredient selection
+- **RESTful API**: Clean API endpoints for sandwiches and options
+- **Modern Frontend**: Angular with TypeScript and SSR capabilities
+- **Development Tools**: Automated scripts for running both services
 
-## Overview
+## 📋 Prerequisites
 
-This repository contains the backend API and the frontend UI for a sandwich builder and ordering demo:
+- **.NET 10 SDK** (preview) - [Download here](https://dotnet.microsoft.com/download/dotnet/10.0)
+- **Node.js** (v18+) and **npm** - [Download here](https://nodejs.org/)
+- **Docker** (optional) - For SQL Server database
 
-- `BackOfTheHouse` — ASP.NET Core backend (targets .NET 10) with EF Core
-- `FrontOfTheHouse` — Angular frontend (kept as a git submodule)
+## ⚡ Quick Start
 
-The project is optimized for local development: quick startup scripts, an SQLite development database, and helpful troubleshooting helpers.
-
-
-## Recent highlights
-
-What's new and noteworthy:
-
-- Polished UX: replaced blocking alerts with unobtrusive toasts and streamlined the Builder UI for faster, more pleasant interactions.
-- Seed additions: introduced the "Tempeh" option so it's visible via `GET /api/options/meats`.
-- Container-ready: prepared a multi-stage `Dockerfile`, `docker-compose.yml`, and `infra/` nginx + certbot templates to run the app as containers.
-- Faster deploys: added `deploy/prebuild.sh` and `deploy/deploy.sh` to package a locally-built frontend and deploy it to a host without doing a slow remote Angular build.
-
-Note: some deployment artifacts were created during development. If they are not present on `main` and you want them restored, I can reintroduce them on a separate branch so `main` remains clean.
-
-## Quick local start
-
-The repository includes convenience scripts to boot the app for local development.
-
-From the repo root:
+### 🔥 One-Command Setup (Recommended)
 
 ```bash
-# start backend + frontend in development mode
+# Start both backend and frontend services
 ./dev-start-all.sh
 ```
 
-Then browse:
+This will:
+- Stop any existing services on ports 4200 and 5251
+- Start the backend with SQLite fallback (if no SQL Server configured)
+- Start the frontend with proxy configuration
+- Display startup logs
 
+**Access the application:**
 - Frontend: http://localhost:4200
-- Backend API: http://localhost:5251 (Swagger available in development)
+- Backend API: http://localhost:5251
+- Swagger UI: http://localhost:5251/swagger (development only)
 
-## Scripts & tooling
+### 🛠️ Manual Setup
 
-- `./dev-start-all.sh` — Start frontend and backend for local dev
-- `./dev-stop-all.sh` — Stop development services cleanly
-- `./dev-status.sh` — Show service status, PIDs and quick log pointers
-- `./dev-clean-build.sh` — Clean caches and perform fresh builds (use `--full` to reinstall frontend deps)
+#### Backend Setup
 
-These scripts are intended to hide platform-specific setup and speed up iteration.
+1. **With SQLite (Simple - No Docker required)**
+   ```bash
+   dotnet run --project BackOfTheHouse.csproj
+   ```
+   - Uses local SQLite database (`Data/sandwich.db`)
+   - Automatically seeds sample data
+   - All features available
 
-## Local development
+2. **With SQL Server (Advanced)**
+   ```bash
+   export DOCKER_DB_CONNECTION='Server=127.0.0.1,1433;Database=sandwich_app;User Id=sa;Password=MyStrongPass123;TrustServerCertificate=True;'
+   dotnet run --project BackOfTheHouse.csproj
+   ```
 
-Backend (simple, uses SQLite by default):
-
-```bash
-dotnet run --project BackOfTheHouse.csproj
-```
-```markdown
-# TheSandwich
-
-A full-stack sandwich ordering demo combining an ASP.NET Core backend with an Angular frontend. Designed for rapid local development, prototyping, and demos.
-
-## Table of contents
-
-- Overview
-- Recent highlights
-- Quick start
-- Scripts & tooling
-- Local development
-- Deployment notes
-- API endpoints
-- Contributing
-
-## Overview
-
-Folders of interest:
-
-- `BackOfTheHouse` — ASP.NET Core backend (targets .NET 10) with EF Core
-- `FrontOfTheHouse` — Angular frontend (kept as a git submodule)
-
-This project is set up for quick iteration with an SQLite development database and helper scripts to start, stop, and inspect both services.
-
-## Recent highlights
-
-- UX: non-blocking toasts replaced alert dialogs and the Builder UI was simplified for faster flows.
-- Seed data: "Tempeh" was added to the meats/options seed so it appears in API responses.
-- Containerization: a multi-stage `Dockerfile`, `docker-compose.yml`, and `infra/nginx` templates were prepared for container deployments.
-- Prebuild deploy flow: `deploy/prebuild.sh` and `deploy/deploy.sh` support packaging a locally-built frontend and deploying it to a host without running a remote Angular build.
-
-## Quick start
-
-Start backend and frontend for development:
-
-```bash
-# from repository root
-./dev-start-all.sh
-```
-
-Open:
-
-- Frontend: http://localhost:4200
-- Backend API: http://localhost:5251 (Swagger available in development)
-
-## Scripts & tooling
-
-- `./dev-start-all.sh` — start both services for development
-- `./dev-stop-all.sh` — stop development services
-- `./dev-status.sh` — show service status, PIDs and quick log pointers
-- `./dev-clean-build.sh` — clean caches and perform fresh builds (`--full` reinstalls frontend deps)
-
-## Local development
-
-Backend (SQLite fallback):
-
-```bash
-dotnet run --project BackOfTheHouse.csproj
-```
-
-Frontend:
+#### Frontend Setup
 
 ```bash
 cd FrontOfTheHouse
 npm install
-npm start
+npm start  # Uses proxy configuration automatically
 ```
 
-If the `FrontOfTheHouse` submodule is not initialized:
+## 🏗️ Architecture
+
+### Database Strategy
+- **Production**: SQL Server with full relational schema
+- **Development**: SQLite with simplified unified schema
+- **Automatic Fallback**: Seamlessly switches based on configuration
+
+### Project Structure
+```
+├── Controllers/              # API controllers
+├── Data/                     # Entity Framework contexts and models
+│   ├── Scaffolded/          # SQL Server entities (scaffolded)
+│   └── Migrations/          # Database migrations
+├── Extensions/              # Service configuration extensions
+├── Services/                # Business logic and repository interfaces
+├── FrontOfTheHouse/         # Angular frontend (submodule)
+└── Properties/              # Launch settings
+```
+
+## 🛠️ Development Tools
+
+### Available Scripts
 
 ```bash
-git submodule update --init --recursive
+# 🚀 Start both services (recommended)
+./dev-start-all.sh
+
+# 🛑 Stop all development services
+./dev-stop-all.sh
+
+# 📊 Check service status and health
+./dev-status.sh
+
+# Start with specific SQL Server connection
+./dev-start-all.sh "Server=localhost,1433;Database=sandwich_app;..."
+
+# Start only frontend (if backend is already running)
+./FrontOfTheHouse/dev-serve.sh
 ```
 
-## Deployment notes
+### Script Features
 
-- The multi-stage `Dockerfile` builds the Angular app and publishes the backend with the frontend assets copied into `wwwroot`.
-- `docker-compose.yml` is prepared to run the backend behind `nginx` with `certbot` webroot integration.
-- To avoid slow remote builds on small servers, use the prebuild flow: build the frontend locally with `deploy/prebuild.sh`, copy the resulting tarball to the host, and run `docker compose --no-build` on the server.
+- **`dev-start-all.sh`** - Enhanced startup script with:
+  - Colorized output and progress indicators
+  - Prerequisite checking (Node.js, .NET SDK)
+  - Automatic dependency installation
+  - Robust service stopping and cleanup
+  - Health checks and detailed status reporting
+  - Better error handling and troubleshooting hints
 
-## API endpoints (selected)
+- **`dev-stop-all.sh`** - Clean shutdown script that:
+  - Gracefully stops services by port and PID
+  - Cleans up all related processes
+  - Provides clear status feedback
+  - Handles both graceful and force-kill scenarios
 
-- `GET /api/sandwiches`
-- `GET /api/sandwiches/{id}`
-- `POST /api/builder`
-- `GET /api/options/meats`
+- **`dev-status.sh`** - Comprehensive status checker that shows:
+  - Service running status and health
+  - Environment information
+  - PID file status
+  - Log file locations and sizes
+  - Quick command reference
 
-Refer to the `Controllers/` folder for the full API surface.
+## 🧰 Developer tasks (local)
 
-## Contributing
+This section documents local developer tooling and recommended workflows for working on the project.
 
-1. Fork the repository
-2. Create a branch: `git checkout -b feature/your-feature`
-3. Implement and test locally
-4. Open a Pull Request
+### dev-clean-build.sh (new)
 
-## License
+Purpose: stop running dev services, clear common caches and build artifacts, reinstall frontend dependencies, and perform fresh builds for backend and frontend.
 
-See the repository LICENSE or include licensing terms as appropriate.
+Usage:
 
-``` 
+```bash
+# Normal clean + build (stops services)
+./dev-clean-build.sh
+
+# Full clean (removes FrontOfTheHouse/node_modules and reinstalls)
+./dev-clean-build.sh --full
+```
+
+Notes:
+- The script will call `./dev-stop-all.sh` to ensure services are not running while cleaning.
+- `--full` removes `node_modules` and requires network access to reinstall packages; expect it to be slower.
+- The script runs `dotnet nuget locals all --clear` and `dotnet build`; on repositories with multiple `.csproj` files it will prefer the project file used by the start script, but if you see a message like:
+
+   "MSBUILD : error MSB1011: Specify which project or solution file to use because this folder contains more than one project or solution file."
+
+   then re-run the build against an explicit project file, for example:
+
+```bash
+dotnet build BackOfTheHouse.csproj
+```
+
+### Recommended developer workflow
+
+1. When switching branches or pulling big changes, use the clean job to ensure your local caches and artifacts are fresh:
+
+```bash
+./dev-clean-build.sh
+```
+
+2. Start services and view the app:
+
+```bash
+./dev-start-all.sh
+# Frontend: http://localhost:4200
 # Backend:  http://localhost:5251
 ```
 
