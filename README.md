@@ -73,8 +73,68 @@ Backend (simple, uses SQLite by default):
 ```bash
 dotnet run --project BackOfTheHouse.csproj
 ```
+```markdown
+# TheSandwich
 
-Frontend (from submodule):
+A full-stack sandwich ordering demo combining an ASP.NET Core backend with an Angular frontend. Designed for rapid local development, prototyping, and demos.
+
+## Table of contents
+
+- Overview
+- Recent highlights
+- Quick start
+- Scripts & tooling
+- Local development
+- Deployment notes
+- API endpoints
+- Contributing
+
+## Overview
+
+Folders of interest:
+
+- `BackOfTheHouse` — ASP.NET Core backend (targets .NET 10) with EF Core
+- `FrontOfTheHouse` — Angular frontend (kept as a git submodule)
+
+This project is set up for quick iteration with an SQLite development database and helper scripts to start, stop, and inspect both services.
+
+## Recent highlights
+
+- UX: non-blocking toasts replaced alert dialogs and the Builder UI was simplified for faster flows.
+- Seed data: "Tempeh" was added to the meats/options seed so it appears in API responses.
+- Containerization: a multi-stage `Dockerfile`, `docker-compose.yml`, and `infra/nginx` templates were prepared for container deployments.
+- Prebuild deploy flow: `deploy/prebuild.sh` and `deploy/deploy.sh` support packaging a locally-built frontend and deploying it to a host without running a remote Angular build.
+
+## Quick start
+
+Start backend and frontend for development:
+
+```bash
+# from repository root
+./dev-start-all.sh
+```
+
+Open:
+
+- Frontend: http://localhost:4200
+- Backend API: http://localhost:5251 (Swagger available in development)
+
+## Scripts & tooling
+
+- `./dev-start-all.sh` — start both services for development
+- `./dev-stop-all.sh` — stop development services
+- `./dev-status.sh` — show service status, PIDs and quick log pointers
+- `./dev-clean-build.sh` — clean caches and perform fresh builds (`--full` reinstalls frontend deps)
+
+## Local development
+
+Backend (SQLite fallback):
+
+```bash
+dotnet run --project BackOfTheHouse.csproj
+```
+
+Frontend:
 
 ```bash
 cd FrontOfTheHouse
@@ -82,101 +142,39 @@ npm install
 npm start
 ```
 
-If `FrontOfTheHouse` is missing (submodule not initialized), run:
+If the `FrontOfTheHouse` submodule is not initialized:
 
 ```bash
 git submodule update --init --recursive
 ```
 
-## Deployment notes (short)
+## Deployment notes
 
-- A multi-stage `Dockerfile` and `docker-compose.yml` were prepared to run the app behind `nginx` and use `certbot` for TLS.
-- To avoid long remote Angular builds on small servers, the repo contains a local prebuild workflow (`deploy/prebuild.sh`) that packages the `FrontOfTheHouse` `dist/` output into a tarball which can be copied to the host and started with `docker compose --no-build`.
-- If you want those files re-added to `main`, or committed to a `deploy/` branch, I can add them and document the exact steps to provision an EC2 instance and attach an Elastic IP.
+- The multi-stage `Dockerfile` builds the Angular app and publishes the backend with the frontend assets copied into `wwwroot`.
+- `docker-compose.yml` is prepared to run the backend behind `nginx` with `certbot` webroot integration.
+- To avoid slow remote builds on small servers, use the prebuild flow: build the frontend locally with `deploy/prebuild.sh`, copy the resulting tarball to the host, and run `docker compose --no-build` on the server.
 
 ## API endpoints (selected)
 
 - `GET /api/sandwiches`
-- `GET /api/options/meats`
+- `GET /api/sandwiches/{id}`
 - `POST /api/builder`
+- `GET /api/options/meats`
 
-For the full surface, see the `Controllers/` folder.
+Refer to the `Controllers/` folder for the full API surface.
 
 ## Contributing
 
-1. Fork the repo
-2. Create a branch (`git checkout -b feature/your-feature`)
-3. Make changes and run local builds/tests
+1. Fork the repository
+2. Create a branch: `git checkout -b feature/your-feature`
+3. Implement and test locally
 4. Open a Pull Request
 
----
+## License
 
-If you'd like a different tone (more marketing-friendly README, or a developer guide split into `docs/`), tell me which style and I'll create a branch with the new README and any supporting docs.
-```
-  - Colorized output and progress indicators
-  - Prerequisite checking (Node.js, .NET SDK)
-  - Automatic dependency installation
-  - Robust service stopping and cleanup
-  - Health checks and detailed status reporting
-  - Better error handling and troubleshooting hints
+See the repository LICENSE or include licensing terms as appropriate.
 
-- **`dev-stop-all.sh`** - Clean shutdown script that:
-  - Gracefully stops services by port and PID
-  - Cleans up all related processes
-  - Provides clear status feedback
-  - Handles both graceful and force-kill scenarios
-
-- **`dev-status.sh`** - Comprehensive status checker that shows:
-  - Service running status and health
-  - Environment information
-  - PID file status
-  - Log file locations and sizes
-  - Quick command reference
-
-## 🧰 Developer tasks (local)
-
-This section documents local developer tooling and recommended workflows for working on the project.
-
-### dev-clean-build.sh (new)
-
-Purpose: stop running dev services, clear common caches and build artifacts, reinstall frontend dependencies, and perform fresh builds for backend and frontend.
-
-Usage:
-
-```bash
-# Normal clean + build (stops services)
-./dev-clean-build.sh
-
-# Full clean (removes FrontOfTheHouse/node_modules and reinstalls)
-./dev-clean-build.sh --full
-```
-
-Notes:
-- The script will call `./dev-stop-all.sh` to ensure services are not running while cleaning.
-- `--full` removes `node_modules` and requires network access to reinstall packages; expect it to be slower.
-- The script runs `dotnet nuget locals all --clear` and `dotnet build`; on repositories with multiple `.csproj` files it will prefer the project file used by the start script, but if you see a message like:
-
-   "MSBUILD : error MSB1011: Specify which project or solution file to use because this folder contains more than one project or solution file."
-
-   then re-run the build against an explicit project file, for example:
-
-```bash
-dotnet build BackOfTheHouse.csproj
-```
-
-### Recommended developer workflow
-
-1. When switching branches or pulling big changes, use the clean job to ensure your local caches and artifacts are fresh:
-
-```bash
-./dev-clean-build.sh
-```
-
-2. Start services and view the app:
-
-```bash
-./dev-start-all.sh
-# Frontend: http://localhost:4200
+``` 
 # Backend:  http://localhost:5251
 ```
 
