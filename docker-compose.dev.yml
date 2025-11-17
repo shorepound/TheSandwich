@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  sql:
+    image: mcr.microsoft.com/azure-sql-edge
+    container_name: sql
+    environment:
+      ACCEPT_EULA: 'Y'
+      MSSQL_SA_PASSWORD: 'Your_password123'
+    ports:
+      - '1433:1433'
+    volumes:
+      - ./db:/var/opt/mssql/data
+    restart: unless-stopped
+
+# Notes:
+# - This compose file provides a development SQL server for local demos.
+# - The app will use the connection string set in `appsettings.Development.json` or your .env.
+# - Use `docker compose -f docker-compose.dev.yml up -d` to start the SQL container.

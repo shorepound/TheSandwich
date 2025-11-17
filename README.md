@@ -77,6 +77,7 @@ This makes it explicit and easy for newcomers to run the project locally without
 Files & helpers:
 - `.env.example` — example env file showing `DOCKER_DB_CONNECTION` and `USE_DOCKER_DB` opt-in usage
 - `scripts/setup-local.sh` — installs frontend dependencies and ensures `Data/` exists for SQLite
+ - `docker-compose.dev.yml` — optional compose file to bring up Azure SQL Edge for demos (`docker compose -f docker-compose.dev.yml up -d`)
 ### 🛠️ Manual Setup
 
 #### Backend Setup
