@@ -9,6 +9,26 @@ This repository contains two main parts:
 - **`BackOfTheHouse`** — ASP.NET Core backend (.NET 10) with Entity Framework
 - **`FrontOfTheHouse`** — Angular frontend with server-side rendering support
 
+## 🎯 Demo & Interview Showcase
+
+**Quick Demo Setup** (< 2 minutes):
+```bash
+git clone https://github.com/shorepound/TheSandwich.git
+cd TheSandwich
+./scripts/setup-local.sh    # Install deps, ensure folders
+./dev-start-all.sh          # Start both services
+# Visit http://localhost:4200/builder to create sandwiches
+```
+
+**Key Technical Highlights**:
+- ✅ **Full-Stack Architecture**: .NET 10 backend + Angular frontend with SSR
+- ✅ **Database Flexibility**: SQL Server (production) with SQLite fallback (development) 
+- ✅ **Modern Patterns**: Dependency injection, async/await, RxJS observables, facade pattern
+- ✅ **Developer Experience**: One-command startup, hot reload, comprehensive logging
+- ✅ **CI/CD Ready**: GitHub Actions pipeline with build validation and artifact generation
+- ✅ **Production Features**: Error handling, timeout management, request retry logic
+- ✅ **Container Support**: Docker Compose for local SQL Server demos
+
 ## 🚀 Features
 
 - **Dual Database Support**: SQL Server (production) with SQLite fallback (development)
