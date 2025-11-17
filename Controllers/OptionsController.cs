@@ -28,16 +28,8 @@ public class OptionsController : ControllerBase
     {
         if (_docker != null)
         {
-            try
-            {
-                var list = _docker.Breads.Select(b => ToOption(b.Id, b.Name)).ToList();
-                return Ok(list);
-            }
-            catch (Exception ex)
-            {
-                // Fall back to sqlite if available
-                Console.WriteLine($"OptionsController.Breads(): falling back to SQLite due to error: {ex.Message}");
-            }
+            var list = _docker.Breads.Select(b => ToOption(b.Id, b.Name)).ToList();
+            return Ok(list);
         }
         if (_sqlite != null)
         {
@@ -55,15 +47,8 @@ public class OptionsController : ControllerBase
     {
         if (_docker != null)
         {
-            try
-            {
-                var list = _docker.Cheeses.Select(c => ToOption(c.Id, c.Name)).ToList();
-                return Ok(list);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"OptionsController.Cheeses(): falling back to SQLite due to error: {ex.Message}");
-            }
+            var list = _docker.Cheeses.Select(c => ToOption(c.Id, c.Name)).ToList();
+            return Ok(list);
         }
         if (_sqlite != null)
         {
@@ -81,15 +66,8 @@ public class OptionsController : ControllerBase
     {
         if (_docker != null)
         {
-            try
-            {
-                var list = _docker.Dressings.Select(d => ToOption(d.Id, d.Name)).ToList();
-                return Ok(list);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"OptionsController.Dressings(): falling back to SQLite due to error: {ex.Message}");
-            }
+            var list = _docker.Dressings.Select(d => ToOption(d.Id, d.Name)).ToList();
+            return Ok(list);
         }
         if (_sqlite != null)
         {
@@ -107,15 +85,8 @@ public class OptionsController : ControllerBase
     {
         if (_docker != null)
         {
-            try
-            {
-                var list = _docker.Meats.Select(m => ToOption(m.Id, m.Name)).ToList();
-                return Ok(list);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"OptionsController.Meats(): falling back to SQLite due to error: {ex.Message}");
-            }
+            var list = _docker.Meats.Select(m => ToOption(m.Id, m.Name)).ToList();
+            return Ok(list);
         }
         if (_sqlite != null)
         {
@@ -133,15 +104,8 @@ public class OptionsController : ControllerBase
     {
         if (_docker != null)
         {
-            try
-            {
-                var list = _docker.Toppings.Select(t => ToOption(t.Id, t.Name)).ToList();
-                return Ok(list);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"OptionsController.Toppings(): falling back to SQLite due to error: {ex.Message}");
-            }
+            var list = _docker.Toppings.Select(t => ToOption(t.Id, t.Name)).ToList();
+            return Ok(list);
         }
         if (_sqlite != null)
         {

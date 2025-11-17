@@ -10,19 +10,20 @@ public static class ServiceCollectionExtensions
     {
         var dockerConn = Environment.GetEnvironmentVariable("DOCKER_DB_CONNECTION") 
                          ?? configuration.GetValue<string>("DockerConnection");
-
-        // Always register the SQLite context so controllers can gracefully
-        // fall back when the Docker SQL Server is unavailable or slow.
-        var sqliteConn = configuration.GetValue<string>("SqliteConnection") 
-                        ?? "Data Source=Data/sandwich.db";
-        services.AddDbContext<SandwichContext>(options => 
-            options.UseSqlite(sqliteConn));
-
+        
         if (!string.IsNullOrEmpty(dockerConn))
         {
-            // Also register scaffolded DockerSandwichContext to connect to the real SQL Server
+            // Use scaffolded DockerSandwichContext to connect to the real SQL Server
             services.AddDbContext<DockerSandwichContext>(options => 
                 options.UseSqlServer(dockerConn));
+        }
+        else
+        {
+            // Use a file-based SQLite DB for local/dev to avoid LocalDB platform issues
+            var sqliteConn = configuration.GetValue<string>("SqliteConnection") 
+                           ?? "Data Source=Data/sandwich.db";
+            services.AddDbContext<SandwichContext>(options => 
+                options.UseSqlite(sqliteConn));
         }
 
         return services;
@@ -64,8 +65,14 @@ public static class ServiceCollectionExtensions
 
     public static void EnsureDatabaseSeeded(this WebApplication app, IConfiguration configuration)
     {
-        // Ensure SQLite DB exists and is seeded (always available as a fallback)
-        SandwichContext.EnsureSeedData(app.Services);
+        // If we're using SQLite (no DOCKER_DB_CONNECTION), ensure DB created and seed sample data
+        var dockerConnCheck = Environment.GetEnvironmentVariable("DOCKER_DB_CONNECTION") 
+                             ?? configuration.GetValue<string>("DockerConnection");
+        
+        if (string.IsNullOrEmpty(dockerConnCheck))
+        {
+            SandwichContext.EnsureSeedData(app.Services);
+        }
     }
 
     public static void ConfigureRequestPipeline(this WebApplication app)
