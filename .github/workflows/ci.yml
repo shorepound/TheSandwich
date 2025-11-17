@@ -1,51 +1,3 @@
-name: CI
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '10.0.x'
-
-      - name: Restore & build backend
-        run: |
-          dotnet restore --verbosity minimal
-          dotnet build --no-restore --configuration Release
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Build frontend
-        working-directory: FrontOfTheHouse
-        run: |
-          npm ci
-          npm run build --if-present
-
-      - name: Run backend tests (if any)
-        run: |
-          dotnet test --no-build --verbosity minimal || true
-
-      - name: Upload build artifacts (optional)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: sandwich-build
-          path: |
-            BackOfTheHouse/bin/**
-            FrontOfTheHouse/dist/**
 name: CI - Build Angular + .NET
 
 on:
@@ -53,7 +5,6 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-  # Manual dispatch to run deploy step with a target (TBD)
   workflow_dispatch:
     inputs:
       deploy_target:
