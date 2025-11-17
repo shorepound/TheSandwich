@@ -51,22 +51,33 @@ trap cleanup EXIT INT TERM
 
 # Database connection configuration
 log_info "Configuring database connection..."
-if [ -n "${DOCKER_DB_CONNECTION:-}" ]; then
-  log_success "DOCKER_DB_CONNECTION already set in environment"
-elif [ -n "${1:-}" ]; then
-  export DOCKER_DB_CONNECTION="$1"
-  log_success "DOCKER_DB_CONNECTION set from script argument"
-elif [ -f ".env" ]; then
-  # try to load DOCKER_DB_CONNECTION from .env if present (simple parse)
-  val=$(grep -E '^DOCKER_DB_CONNECTION=' .env | sed -E 's/^DOCKER_DB_CONNECTION=//; s/^"//; s/"$//') || true
-  if [ -n "$val" ]; then
-    export DOCKER_DB_CONNECTION="$val"
-    log_success "DOCKER_DB_CONNECTION loaded from .env"
-  else
-    log_warning "No DOCKER_DB_CONNECTION found in .env, will use SQLite"
-  fi
+# Default behavior: prefer the lightweight SQLite fallback for local clones.
+# To opt-in to the Docker SQL Server, set USE_DOCKER_DB=1 in the environment
+# or pass --use-docker-db as the first script argument.
+USE_DOCKER_DB=${USE_DOCKER_DB:-}
+if [ "${1:-}" = "--use-docker-db" ] || [ "${1:-}" = "-d" ]; then
+    USE_DOCKER_DB=1
+fi
+
+if [ -n "${USE_DOCKER_DB}" ] && [ "$USE_DOCKER_DB" != "0" ]; then
+    # If explicit opt-in, try to read DOCKER_DB_CONNECTION from environment or .env
+    if [ -n "${DOCKER_DB_CONNECTION:-}" ]; then
+        log_success "DOCKER_DB_CONNECTION already set in environment"
+    elif [ -f ".env" ]; then
+        val=$(grep -E '^DOCKER_DB_CONNECTION=' .env | sed -E 's/^DOCKER_DB_CONNECTION=//; s/^"//; s/"$//') || true
+        if [ -n "$val" ]; then
+            export DOCKER_DB_CONNECTION="$val"
+            log_success "DOCKER_DB_CONNECTION loaded from .env"
+        else
+            log_warning "USE_DOCKER_DB requested but .env exists and no DOCKER_DB_CONNECTION found"
+        fi
+    else
+        log_warning "USE_DOCKER_DB requested but no .env file found; ensure DOCKER_DB_CONNECTION is set or create a .env"
+    fi
 else
-  log_warning "No .env file found, will use SQLite database"
+    # Explicitly unset DOCKER_DB_CONNECTION so the app uses SQLite by default
+    unset DOCKER_DB_CONNECTION 2>/dev/null || true
+    log_info "Not using Docker SQL for local dev; app will use SQLite fallback (no DOCKER_DB_CONNECTION)"
 fi
 
 # Check prerequisites

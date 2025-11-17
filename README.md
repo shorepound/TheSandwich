@@ -33,15 +33,40 @@ This repository contains two main parts:
 ```
 
 This will:
-- Stop any existing services on ports 4200 and 5251
-- Start the backend with SQLite fallback (if no SQL Server configured)
-- Start the frontend with proxy configuration
-- Display startup logs
 
 **Access the application:**
-- Frontend: http://localhost:4200
-- Backend API: http://localhost:5251
-- Swagger UI: http://localhost:5251/swagger (development only)
+
+### Quick start (no Docker DB)
+
+The project defaults to a lightweight SQLite fallback so anyone can clone and run locally without Docker or SQL Server.
+
+1. Install prerequisites: .NET SDK and Node.js/npm
+2. From the repo root run:
+
+```bash
+./dev-start-all.sh
+```
+
+This will start the backend (Kestrel) and frontend (Angular dev server). By default the backend will not attempt to use a Docker SQL server and will use a local SQLite DB (seeded with sample data).
+
+### Run with Docker SQL Server (opt-in)
+
+If you want to use the Docker SQL Server for development, opt in explicitly. Create a `.env` file containing a `DOCKER_DB_CONNECTION` (or set the env var), then run the script with the `USE_DOCKER_DB` environment variable or `--use-docker-db` flag:
+
+```bash
+# example .env
+# DOCKER_DB_CONNECTION="Server=127.0.0.1,1433;Database=sandwich_app;User Id=sa;Password=MyStrongPass123;TrustServerCertificate=True;"
+
+# start using SQLite (default)
+./dev-start-all.sh
+
+# start and prefer Docker DB (requires a running SQL container or .env)
+USE_DOCKER_DB=1 ./dev-start-all.sh
+# or
+./dev-start-all.sh --use-docker-db
+```
+
+This makes it explicit and easy for newcomers to run the project locally without needing Docker.
 
 ### 🛠️ Manual Setup
 
