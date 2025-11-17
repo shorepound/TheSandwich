@@ -16,6 +16,9 @@ public static class ServiceCollectionExtensions
             // Use scaffolded DockerSandwichContext to connect to the real SQL Server
             services.AddDbContext<DockerSandwichContext>(options => 
                 options.UseSqlServer(dockerConn));
+            
+            // Register DockerSandwichContext as a service for dependency injection
+            services.AddScoped<DockerSandwichContext>();
         }
         else
         {
@@ -24,6 +27,9 @@ public static class ServiceCollectionExtensions
                            ?? "Data Source=Data/sandwich.db";
             services.AddDbContext<SandwichContext>(options => 
                 options.UseSqlite(sqliteConn));
+                
+            // Register SandwichContext as a service for dependency injection
+            services.AddScoped<SandwichContext>();
         }
 
         return services;
