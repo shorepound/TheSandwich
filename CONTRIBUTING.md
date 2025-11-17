@@ -38,6 +38,14 @@ Visit http://localhost:4200 to see the application running.
 ./dev-start-all.sh "Server=localhost,1433;Database=sandwich_app;User=sa;Password=YourPassword;TrustServerCertificate=True;"
 ```
 
+Before running the start script it's helpful to run the local setup helper once after cloning. It installs frontend dependencies and creates the `Data/` folder used by the SQLite fallback:
+
+```bash
+./scripts/setup-local.sh
+```
+
+You can also consult `.env.example` for the recommended `DOCKER_DB_CONNECTION` format. To opt in to Docker SQL Server when starting, set `USE_DOCKER_DB=1` or pass `--use-docker-db` to `./dev-start-all.sh`.
+
 ### Option 2: Manual Setup
 
 #### Backend (.NET API)

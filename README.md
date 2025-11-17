@@ -49,6 +49,12 @@ The project defaults to a lightweight SQLite fallback so anyone can clone and ru
 
 This will start the backend (Kestrel) and frontend (Angular dev server). By default the backend will not attempt to use a Docker SQL server and will use a local SQLite DB (seeded with sample data).
 
+Tip: run the lightweight setup helper once after cloning to install frontend dependencies and ensure the `Data/` folder exists:
+
+```bash
+./scripts/setup-local.sh
+```
+
 ### Run with Docker SQL Server (opt-in)
 
 If you want to use the Docker SQL Server for development, opt in explicitly. Create a `.env` file containing a `DOCKER_DB_CONNECTION` (or set the env var), then run the script with the `USE_DOCKER_DB` environment variable or `--use-docker-db` flag:
@@ -68,6 +74,9 @@ USE_DOCKER_DB=1 ./dev-start-all.sh
 
 This makes it explicit and easy for newcomers to run the project locally without needing Docker.
 
+Files & helpers:
+- `.env.example` — example env file showing `DOCKER_DB_CONNECTION` and `USE_DOCKER_DB` opt-in usage
+- `scripts/setup-local.sh` — installs frontend dependencies and ensures `Data/` exists for SQLite
 ### 🛠️ Manual Setup
 
 #### Backend Setup
